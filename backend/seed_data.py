@@ -72,9 +72,26 @@ async def seed_data():
         "assignedFSAs": ["3A8", "2B7", "1C6"],  # FSA codes they serve
         "createdAt": datetime.utcnow()
     }
-    await db.users.insert_one(franchisee_user)
+    result = await db.users.insert_one(franchisee_user)
+    franchisee_id = str(result.inserted_id)
     print("✅ Franchisee created - Email: franchisee@test.com, Password: franchisee123")
     print("   Assigned FSA Codes: 3A8, 2B7, 1C6")
+    
+    # Create Sample Workforce User
+    print("\n👤 Creating sample workforce user...")
+    workforce_user = {
+        "email": "worker@test.com",
+        "password": pwd_context.hash("worker123"),
+        "name": "Mike Johnson",
+        "phone": "(555) 333-3333",
+        "role": "workforce",
+        "assignedFSAs": [],
+        "franchiseeId": franchisee_id,
+        "createdAt": datetime.utcnow()
+    }
+    await db.users.insert_one(workforce_user)
+    print("✅ Workforce created - Email: worker@test.com, Password: worker123")
+    print(f"   Assigned to franchisee: {franchisee_id}")
     
     # Create Services
     print("\n🧹 Creating cleaning services...")
