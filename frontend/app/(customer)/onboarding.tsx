@@ -443,4 +443,40 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
   },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  typeSelector: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  typeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 2,
+    borderColor: colors.border,
+    gap: 8,
+  },
+  typeOptionActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.gray[50],
+  },
+  typeOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  typeOptionTextActive: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
 });
