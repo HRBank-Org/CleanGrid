@@ -71,7 +71,7 @@ export default function EditProperty() {
 
   const handleSubmit = async () => {
     if (!name || !address || !postalCode) {
-      Alert.alert('Error', 'Please fill in required fields');
+      showAlert('Error', 'Please fill in required fields');
       return;
     }
 
@@ -90,11 +90,9 @@ export default function EditProperty() {
         notes,
       });
 
-      Alert.alert('Success', 'Property updated successfully', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      showAlert('Success', 'Property updated successfully', () => router.back());
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.detail || 'Failed to update property');
+      showAlert('Error', error.response?.data?.detail || 'Failed to update property');
     } finally {
       setSaving(false);
     }
