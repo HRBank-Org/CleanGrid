@@ -209,7 +209,9 @@ export default function EnhancedQuoteScreen() {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
 
-          <Text style={styles.title}>Get Your Quote</Text>
+          <Text style={styles.title}>
+            {serviceName ? `Quote: ${serviceName}` : 'Get Your Quote'}
+          </Text>
           <Text style={styles.subtitle}>Live pricing as you customize</Text>
 
           {/* Live Price Display */}
