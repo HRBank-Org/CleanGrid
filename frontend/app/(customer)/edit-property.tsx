@@ -22,6 +22,8 @@ export default function EditProperty() {
   const { propertyId } = useLocalSearchParams();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+  const [apartmentNumber, setApartmentNumber] = useState('');
+  const [buzzNumber, setBuzzNumber] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [propertyType, setPropertyType] = useState<'residential' | 'commercial'>('residential');
   const [bedrooms, setBedrooms] = useState('');
@@ -41,6 +43,8 @@ export default function EditProperty() {
       const property = response.data;
       setName(property.name);
       setAddress(property.address);
+      setApartmentNumber(property.apartmentNumber || '');
+      setBuzzNumber(property.buzzNumber || '');
       setPostalCode(property.postalCode);
       setPropertyType(property.propertyType);
       setBedrooms(property.bedrooms?.toString() || '');
