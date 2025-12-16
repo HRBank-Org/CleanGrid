@@ -332,24 +332,33 @@ export default function EnhancedQuoteScreen() {
           {/* Frequency */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Frequency</Text>
-            <View style={styles.chipGroup}>
-              {[
-                { value: 'one_time', label: 'One Time' },
-                { value: 'weekly', label: 'Weekly (15% off)' },
-                { value: 'biweekly', label: 'Bi-weekly (10% off)' },
-                { value: 'monthly', label: 'Monthly (5% off)' },
-              ].map((freq) => (
-                <TouchableOpacity
-                  key={freq.value}
-                  style={[styles.chip, frequency === freq.value && styles.chipActive]}
-                  onPress={() => setFrequency(freq.value)}
-                >
-                  <Text style={[styles.chipText, frequency === freq.value && styles.chipTextActive]}>
-                    {freq.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {isOneTimeService ? (
+              <View style={styles.oneTimeNotice}>
+                <Ionicons name="information-circle" size={20} color={colors.secondary} />
+                <Text style={styles.oneTimeNoticeText}>
+                  This is a one-time service only. Recurring options not available.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.chipGroup}>
+                {[
+                  { value: 'one_time', label: 'One Time' },
+                  { value: 'weekly', label: 'Weekly (15% off)' },
+                  { value: 'biweekly', label: 'Bi-weekly (10% off)' },
+                  { value: 'monthly', label: 'Monthly (5% off)' },
+                ].map((freq) => (
+                  <TouchableOpacity
+                    key={freq.value}
+                    style={[styles.chip, frequency === freq.value && styles.chipActive]}
+                    onPress={() => setFrequency(freq.value)}
+                  >
+                    <Text style={[styles.chipText, frequency === freq.value && styles.chipTextActive]}>
+                      {freq.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
           {/* Residential-specific fields */}
