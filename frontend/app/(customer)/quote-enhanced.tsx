@@ -300,6 +300,26 @@ export default function EnhancedQuoteScreen() {
             autoCapitalize="characters"
           />
 
+          {/* Service Level - Only show when NOT coming from service card */}
+          {!serviceName && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Service Level</Text>
+              <View style={styles.chipGroup}>
+                {['standard', 'deep', 'move_in_out', 'post_reno'].map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={[styles.chip, serviceLevel === level && styles.chipActive]}
+                    onPress={() => setServiceLevel(level)}
+                  >
+                    <Text style={[styles.chipText, serviceLevel === level && styles.chipTextActive]}>
+                      {level.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Condition */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Condition</Text>
