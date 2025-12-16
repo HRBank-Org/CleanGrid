@@ -622,6 +622,169 @@ async def get_franchisee_earnings(current_user: User = Depends(get_current_user)
         "averageJobValue": total_earnings / len(completed_bookings) if completed_bookings else 0
     }
 
+# PROPERTY MANAGEMENT ROUTES
+@api_router.post("/properties", response_model=Property)
+async def create_property(property_data: PropertyCreate, current_user: User = Depends(get_current_user)):
+    if current_user.role != "customer":
+        raise HTTPException(status_code=403, detail="Only customers can create properties")
+    
+    fsa_code = extract_fsa(property_data.postalCode)
+    
+    property_dict = property_data.dict()
+    property_dict["customerId"] = current_user.id
+    property_dict["fsaCode"] = fsa_code
+    property_dict["createdAt"] = datetime.utcnow()
+    
+    result = await db.properties.insert_one(property_dict)
+    created_property = await db.properties.find_one({"_id": result.inserted_id})
+    created_property["_id"] = str(created_property["_id"])
+    
+    return Property(**created_property)
+
+@api_router.get("/properties", response_model=List[Property])
+async def get_properties(current_user: User = Depends(get_current_user)):
+    if current_user.role != "customer":
+        raise HTTPException(status_code=403, detail="Only customers can view properties")
+    
+    properties = await db.properties.find({"customerId": current_user.id}).to_list(100)
+    for prop in properties:
+        prop["_id"] = str(prop["_id"])
+    return [Property(**prop) for prop in properties]
+
+@api_router.get("/properties/{property_id}", response_model=Property)
+async def get_property(property_id: str, current_user: User = Depends(get_current_user)):
+    property_doc = await db.properties.find_one({"_id": ObjectId(property_id)})
+    if not property_doc:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    if property_doc["customerId"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    property_doc["_id"] = str(property_doc["_id"])
+    return Property(**property_doc)
+
+@api_router.put("/properties/{property_id}", response_model=Property)
+async def update_property(
+    property_id: str,
+    property_data: PropertyCreate,
+    current_user: User = Depends(get_current_user)
+):
+    property_doc = await db.properties.find_one({"_id": ObjectId(property_id)})
+    if not property_doc:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    if property_doc["customerId"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    fsa_code = extract_fsa(property_data.postalCode)
+    update_dict = property_data.dict()
+    update_dict["fsaCode"] = fsa_code
+    
+    await db.properties.update_one(
+        {"_id": ObjectId(property_id)},
+        {"$set": update_dict}
+    )
+    
+    updated_property = await db.properties.find_one({"_id": ObjectId(property_id)})
+    updated_property["_id"] = str(updated_property["_id"])
+    
+    return Property(**updated_property)
+
+@api_router.delete("/properties/{property_id}")
+async def delete_property(property_id: str, current_user: User = Depends(get_current_user)):
+    property_doc = await db.properties.find_one({"_id": ObjectId(property_id)})
+    if not property_doc:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    if property_doc["customerId"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Check if property has active bookings
+    active_bookings = await db.bookings.count_documents({
+        "propertyId": property_id,
+        "status": {"$in": ["pending", "assigned", "in-progress"]}
+    })
+    
+    if active_bookings > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete property with active bookings"
+        )
+    
+    await db.properties.delete_one({"_id": ObjectId(property_id)})
+    return {"message": "Property deleted successfully"}
+
+# TASK MANAGEMENT ROUTES
+@api_router.get("/bookings/{booking_id}/tasks", response_model=List[Task])
+async def get_booking_tasks(booking_id: str, current_user: User = Depends(get_current_user)):
+    # Verify booking access
+    booking = await db.bookings.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Check permissions
+    if current_user.role == "customer" and booking["customerId"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    elif current_user.role in ["franchisee", "workforce"]:
+        if current_user.role == "franchisee" and booking.get("franchiseeId") != current_user.id:
+            raise HTTPException(status_code=403, detail="Access denied")
+        elif current_user.role == "workforce" and booking.get("franchiseeId") != current_user.franchiseeId:
+            raise HTTPException(status_code=403, detail="Access denied")
+    
+    tasks = await db.tasks.find({"bookingId": booking_id}).to_list(100)
+    for task in tasks:
+        task["_id"] = str(task["_id"])
+    return [Task(**task) for task in tasks]
+
+@api_router.patch("/tasks/{task_id}")
+async def update_task(
+    task_id: str,
+    task_update: TaskUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in ["workforce", "franchisee"]:
+        raise HTTPException(status_code=403, detail="Only workforce can update tasks")
+    
+    task = await db.tasks.find_one({"_id": ObjectId(task_id)})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    update_data = {
+        "isCompleted": task_update.isCompleted,
+        "notes": task_update.notes
+    }
+    
+    if task_update.isCompleted:
+        update_data["completedBy"] = current_user.id
+        update_data["completedAt"] = datetime.utcnow()
+    
+    await db.tasks.update_one(
+        {"_id": ObjectId(task_id)},
+        {"$set": update_data}
+    )
+    
+    updated_task = await db.tasks.find_one({"_id": ObjectId(task_id)})
+    updated_task["_id"] = str(updated_task["_id"])
+    
+    return Task(**updated_task)
+
+# WORKFORCE ROUTES
+@api_router.get("/workforce/jobs")
+async def get_workforce_jobs(current_user: User = Depends(get_current_user)):
+    if current_user.role != "workforce":
+        raise HTTPException(status_code=403, detail="Workforce access required")
+    
+    # Get jobs assigned to workforce's franchisee
+    jobs = await db.bookings.find({
+        "franchiseeId": current_user.franchiseeId,
+        "status": {"$in": ["assigned", "in-progress"]}
+    }).sort("scheduledDate", 1).to_list(100)
+    
+    for job in jobs:
+        job["_id"] = str(job["_id"])
+    
+    return jobs
+
 # Include the router in the main app
 app.include_router(api_router)
 
