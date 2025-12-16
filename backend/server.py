@@ -12,6 +12,10 @@ from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 from bson import ObjectId
+from quote_calculator import (
+    QuoteCalculator, QuoteRequest as EnhancedQuoteRequest,
+    QuoteResponse as EnhancedQuoteResponse, AVAILABLE_ADDONS
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
