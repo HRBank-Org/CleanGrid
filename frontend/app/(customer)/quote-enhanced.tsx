@@ -59,6 +59,9 @@ export default function EnhancedQuoteScreen() {
     return 'standard';
   };
   
+  // Determine if this is a one-time only service
+  const isOneTimeService = serviceCategory === 'move-in-out' || serviceCategory === 'post-reno';
+  
   // Job Type Selection
   const [jobType, setJobType] = useState<'residential' | 'commercial'>(getInitialJobType());
   
