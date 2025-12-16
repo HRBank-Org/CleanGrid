@@ -326,6 +326,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: colors.gray[50],
   },
+  actionButtonDisabled: {
+    opacity: 0.6,
+  },
   actionText: {
     fontSize: 14,
     fontWeight: '500',
