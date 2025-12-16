@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../utils/colors';
 import api from '../../services/api';
@@ -32,53 +33,80 @@ export default function PropertiesScreen() {
   const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const loadProperties = async () => {
     try {
+      setLoading(true);
       const response = await api.get('/api/properties');
       setProperties(response.data);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load properties');
+      console.error('Failed to load properties:', error);
+      if (Platform.OS === 'web') {
+        console.error('Load error');
+      } else {
+        Alert.alert('Error', 'Failed to load properties');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadProperties();
-  }, []);
+  // Reload properties when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadProperties();
+    }, [])
+  );
 
   const handleDelete = async (propertyId: string, propertyName: string) => {
-    // Use confirm for web compatibility, Alert.alert for native
-    const shouldDelete = Platform.OS === 'web' 
-      ? window.confirm(`Are you sure you want to delete "${propertyName}"?`)
-      : await new Promise<boolean>((resolve) => {
-          Alert.alert(
-            'Delete Property',
-            `Are you sure you want to delete "${propertyName}"?`,
-            [
-              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
-            ]
-          );
-        });
+    console.log('Delete initiated for:', propertyId, propertyName);
+    
+    // Use confirm for web compatibility
+    let shouldDelete = false;
+    
+    if (Platform.OS === 'web') {
+      shouldDelete = window.confirm(`Are you sure you want to delete "${propertyName}"?`);
+    } else {
+      shouldDelete = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          'Delete Property',
+          `Are you sure you want to delete "${propertyName}"?`,
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+          ]
+        );
+      });
+    }
+
+    console.log('Should delete:', shouldDelete);
 
     if (shouldDelete) {
       try {
+        setDeleting(propertyId);
+        console.log('Calling DELETE API for:', propertyId);
         await api.delete(`/api/properties/${propertyId}`);
+        console.log('DELETE successful');
+        
         if (Platform.OS === 'web') {
           window.alert('Property deleted successfully');
         } else {
           Alert.alert('Success', 'Property deleted');
         }
-        loadProperties();
+        
+        // Refresh the list
+        await loadProperties();
       } catch (error: any) {
+        console.error('DELETE failed:', error);
         const errorMsg = error.response?.data?.detail || 'Failed to delete property';
         if (Platform.OS === 'web') {
           window.alert(`Error: ${errorMsg}`);
         } else {
           Alert.alert('Error', errorMsg);
         }
+      } finally {
+        setDeleting(null);
       }
     }
   };
