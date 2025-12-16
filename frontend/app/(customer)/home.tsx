@@ -128,8 +128,12 @@ export default function CustomerHome() {
               style={styles.serviceCard}
               onPress={() =>
                 router.push({
-                  pathname: '/(customer)/quote',
-                  params: { serviceId: service._id },
+                  pathname: '/(customer)/quote-enhanced',
+                  params: { 
+                    serviceId: service._id,
+                    serviceName: service.name,
+                    serviceCategory: service.category 
+                  },
                 })
               }
             >
