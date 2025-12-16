@@ -25,25 +25,57 @@ interface Service {
   description: string;
 }
 
+interface Property {
+  _id: string;
+  name: string;
+  propertyType: string;
+}
+
 export default function CustomerHome() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const [services, setServices] = useState<Service[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadServices = async () => {
+  // Determine what property types user has
+  const hasResidential = properties.some(p => p.propertyType === 'residential');
+  const hasCommercial = properties.some(p => p.propertyType === 'commercial');
+  const hasNoProperties = properties.length === 0;
+
+  // Filter services based on user's property types
+  const filteredServices = services.filter(service => {
+    if (hasNoProperties) return true; // Show all if no properties
+    
+    const isResidentialService = service.serviceType === 'residential' || 
+      ['regular', 'deep-clean', 'move-in-out', 'post-reno'].includes(service.category);
+    const isCommercialService = service.serviceType === 'commercial' || 
+      ['commercial', 'commercial-deep'].includes(service.category);
+    
+    if (hasResidential && hasCommercial) return true; // Show all
+    if (hasResidential && isResidentialService) return true;
+    if (hasCommercial && isCommercialService) return true;
+    
+    return false;
+  });
+
+  const loadData = async () => {
     try {
-      const response = await api.get('/api/services');
-      setServices(response.data);
+      const [servicesRes, propertiesRes] = await Promise.all([
+        api.get('/api/services'),
+        api.get('/api/properties'),
+      ]);
+      setServices(servicesRes.data);
+      setProperties(propertiesRes.data);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load services');
+      Alert.alert('Error', 'Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadServices();
+    loadData();
   }, []);
 
   const getCategoryIcon = (category: string) => {
