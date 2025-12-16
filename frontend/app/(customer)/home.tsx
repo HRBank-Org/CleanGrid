@@ -149,16 +149,46 @@ export default function CustomerHome() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionTitle}>Our Services</Text>
+        {/* No properties prompt */}
+        {hasNoProperties && !loading && (
+          <TouchableOpacity
+            style={styles.addPropertyPrompt}
+            onPress={() => router.push('/(customer)/onboarding')}
+          >
+            <View style={styles.promptIcon}>
+              <Ionicons name="location" size={24} color={colors.secondary} />
+            </View>
+            <View style={styles.promptContent}>
+              <Text style={styles.promptTitle}>Add your first property</Text>
+              <Text style={styles.promptSubtitle}>
+                Get personalized services and pricing for your space
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={colors.secondary} />
+          </TouchableOpacity>
+        )}
 
-        {services.length === 0 && !loading ? (
+        {/* Property type badge */}
+        {!hasNoProperties && (
+          <View style={styles.propertyTypeBadge}>
+            <Text style={styles.propertyTypeBadgeText}>
+              Showing services for: {hasResidential && hasCommercial ? 'All properties' : hasResidential ? 'Residential' : 'Commercial'}
+            </Text>
+          </View>
+        )}
+
+        <Text style={styles.sectionTitle}>
+          {hasNoProperties ? 'Our Services' : 'Your Services'}
+        </Text>
+
+        {filteredServices.length === 0 && !loading ? (
           <View style={styles.emptyState}>
             <Ionicons name="cube-outline" size={48} color={colors.gray[300]} />
             <Text style={styles.emptyText}>No services available yet</Text>
             <Text style={styles.emptySubtext}>Check back soon for cleaning services</Text>
           </View>
         ) : (
-          services.map((service) => (
+          filteredServices.map((service) => (
             <TouchableOpacity
               key={service._id}
               style={styles.serviceCard}
@@ -186,12 +216,37 @@ export default function CustomerHome() {
                   {service.description}
                 </Text>
                 <Text style={styles.servicePrice}>
-                  From ${service.basePriceResidential}
+                  From ${service.serviceType === 'commercial' ? service.basePriceCommercial : service.basePriceResidential}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={24} color={colors.gray[400]} />
             </TouchableOpacity>
           ))
+        )}
+
+        {/* Show other services hint */}
+        {!hasNoProperties && !hasResidential && hasCommercial && (
+          <TouchableOpacity
+            style={styles.otherServicesHint}
+            onPress={() => router.push('/(customer)/add-property')}
+          >
+            <Ionicons name="home-outline" size={20} color={colors.textSecondary} />
+            <Text style={styles.otherServicesText}>
+              Add a residential property to see home cleaning services
+            </Text>
+          </TouchableOpacity>
+        )}
+        
+        {!hasNoProperties && hasResidential && !hasCommercial && (
+          <TouchableOpacity
+            style={styles.otherServicesHint}
+            onPress={() => router.push('/(customer)/add-property')}
+          >
+            <Ionicons name="business-outline" size={20} color={colors.textSecondary} />
+            <Text style={styles.otherServicesText}>
+              Add a commercial property to see business cleaning services
+            </Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </SafeAreaView>
