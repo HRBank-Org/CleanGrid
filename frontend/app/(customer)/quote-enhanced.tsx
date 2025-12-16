@@ -69,8 +69,15 @@ export default function EnhancedQuoteScreen() {
   const [postalCode, setPostalCode] = useState(user?.postalCode || '');
   const [serviceLevel, setServiceLevel] = useState(getInitialServiceLevel());
   const [condition, setCondition] = useState('normal');
-  const [frequency, setFrequency] = useState('one_time');
+  const [frequency, setFrequency] = useState(isOneTimeService ? 'one_time' : 'one_time');
   const [timeWindow, setTimeWindow] = useState('normal');
+  
+  // Lock frequency to one_time for one-time services
+  useEffect(() => {
+    if (isOneTimeService && frequency !== 'one_time') {
+      setFrequency('one_time');
+    }
+  }, [isOneTimeService]);
   
   // Residential fields
   const [bedrooms, setBedrooms] = useState('2');
