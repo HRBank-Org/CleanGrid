@@ -88,6 +88,8 @@ class User(UserBase):
 class PropertyCreate(BaseModel):
     name: str  # e.g., "Home", "Downtown Office", "Vacation House"
     address: str
+    apartmentNumber: Optional[str] = None
+    buzzNumber: Optional[str] = None
     postalCode: str
     propertyType: str  # residential, commercial
     bedrooms: Optional[int] = 0
