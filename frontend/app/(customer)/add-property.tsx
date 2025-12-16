@@ -21,6 +21,8 @@ export default function AddProperty() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+  const [apartmentNumber, setApartmentNumber] = useState('');
+  const [buzzNumber, setBuzzNumber] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [propertyType, setPropertyType] = useState<'residential' | 'commercial'>('residential');
   const [bedrooms, setBedrooms] = useState('');
