@@ -137,6 +137,23 @@ export default function AddProperty() {
             onChangeText={setAddress}
           />
 
+          <View style={styles.row}>
+            <Input
+              label="Apt/Unit #"
+              placeholder="205"
+              value={apartmentNumber}
+              onChangeText={setApartmentNumber}
+              containerStyle={{ flex: 1, marginRight: 8 }}
+            />
+            <Input
+              label="Buzz Code"
+              placeholder="1234"
+              value={buzzNumber}
+              onChangeText={setBuzzNumber}
+              containerStyle={{ flex: 1, marginLeft: 8 }}
+            />
+          </View>
+
           <Input
             label="Postal Code *"
             placeholder="M5V 3A8"
