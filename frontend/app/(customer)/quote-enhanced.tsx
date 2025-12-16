@@ -44,10 +44,23 @@ interface QuoteData {
 export default function EnhancedQuoteScreen() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
-  const { serviceId } = useLocalSearchParams();
+  const { serviceId, serviceName, serviceCategory } = useLocalSearchParams();
+  
+  // Determine job type from service category if provided
+  const getInitialJobType = (): 'residential' | 'commercial' => {
+    if (serviceCategory === 'commercial') return 'commercial';
+    return 'residential'; // Default to residential
+  };
+  
+  const getInitialServiceLevel = (): string => {
+    if (serviceCategory === 'deep-clean') return 'deep';
+    if (serviceCategory === 'move-in-out') return 'move_in_out';
+    if (serviceCategory === 'post-reno') return 'post_reno';
+    return 'standard';
+  };
   
   // Job Type Selection
-  const [jobType, setJobType] = useState<'residential' | 'commercial'>('residential');
+  const [jobType, setJobType] = useState<'residential' | 'commercial'>(getInitialJobType());
   
   // Common fields
   const [postalCode, setPostalCode] = useState(user?.postalCode || '');
