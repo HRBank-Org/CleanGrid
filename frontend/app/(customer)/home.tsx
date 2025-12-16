@@ -192,6 +192,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  enhancedQuoteButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  enhancedQuoteContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  enhancedQuoteText: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  enhancedQuoteTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.white,
+    marginBottom: 4,
+  },
+  enhancedQuoteSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+  },
   quickActions: {
     flexDirection: 'row',
     marginBottom: 32,
