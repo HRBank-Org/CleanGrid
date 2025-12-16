@@ -12,9 +12,11 @@ export default function Welcome() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="sparkles" size={48} color={colors.primary} />
-          </View>
+          <Image
+            source={require('../../assets/images/neatify-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>Neatify</Text>
           <Text style={styles.subtitle}>Professional Cleaning Services</Text>
           <Text style={styles.description}>
