@@ -664,6 +664,22 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 12,
   },
+  selectedServiceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray[50],
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  selectedServiceText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
+    marginLeft: 8,
+  },
   radioGroup: {
     flexDirection: 'row',
     gap: 12,
