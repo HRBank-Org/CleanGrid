@@ -27,6 +27,11 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
+      <Image
+        source={require('../assets/images/neatify-logo.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <ActivityIndicator size="large" color={colors.primary} />
       <Text style={styles.text}>Loading Neatify...</Text>
     </View>
