@@ -45,6 +45,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.background,
   },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 24,
+  },
   text: {
     marginTop: 16,
     fontSize: 16,
