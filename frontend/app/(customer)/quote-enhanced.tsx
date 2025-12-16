@@ -320,24 +320,6 @@ export default function EnhancedQuoteScreen() {
             </View>
           )}
 
-          {/* Condition */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Condition</Text>
-            <View style={styles.chipGroup}>
-              {['light', 'normal', 'heavy'].map((cond) => (
-                <TouchableOpacity
-                  key={cond}
-                  style={[styles.chip, condition === cond && styles.chipActive]}
-                  onPress={() => setCondition(cond)}
-                >
-                  <Text style={[styles.chipText, condition === cond && styles.chipTextActive]}>
-                    {cond.charAt(0).toUpperCase() + cond.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
           {/* Frequency */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Frequency</Text>
