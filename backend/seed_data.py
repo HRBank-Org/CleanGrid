@@ -80,6 +80,7 @@ async def seed_data():
     print("\n🧹 Creating cleaning services...")
     
     services = [
+        # RECURRING SERVICES (top priority)
         {
             "name": "Regular House Cleaning",
             "category": "regular",
@@ -89,28 +90,7 @@ async def seed_data():
             "pricePerSqFt": 0.10,
             "description": "Standard cleaning service including dusting, vacuuming, mopping, and bathroom/kitchen cleaning",
             "estimatedDuration": 120,
-            "createdAt": datetime.utcnow()
-        },
-        {
-            "name": "Deep Cleaning",
-            "category": "deep-clean",
-            "serviceType": "both",
-            "basePriceResidential": 179.99,
-            "basePriceCommercial": 299.99,
-            "pricePerSqFt": 0.20,
-            "description": "Thorough deep cleaning including baseboards, inside appliances, windows, and detailed cleaning of all areas",
-            "estimatedDuration": 240,
-            "createdAt": datetime.utcnow()
-        },
-        {
-            "name": "Move In/Out Cleaning",
-            "category": "move-in-out",
-            "serviceType": "both",
-            "basePriceResidential": 199.99,
-            "basePriceCommercial": 349.99,
-            "pricePerSqFt": 0.25,
-            "description": "Complete cleaning for moving in or out, ensuring property is spotless for new occupants",
-            "estimatedDuration": 300,
+            "isRecurringService": True,
             "createdAt": datetime.utcnow()
         },
         {
@@ -122,17 +102,44 @@ async def seed_data():
             "pricePerSqFt": 0.15,
             "description": "Professional office cleaning including workspaces, common areas, restrooms, and break rooms",
             "estimatedDuration": 180,
+            "isRecurringService": True,
+            "createdAt": datetime.utcnow()
+        },
+        {
+            "name": "Deep Cleaning",
+            "category": "deep-clean",
+            "serviceType": "both",
+            "basePriceResidential": 179.99,
+            "basePriceCommercial": 299.99,
+            "pricePerSqFt": 0.20,
+            "description": "Thorough deep cleaning including baseboards, inside appliances, windows, and detailed cleaning of all areas",
+            "estimatedDuration": 240,
+            "isRecurringService": True,
+            "createdAt": datetime.utcnow()
+        },
+        # ONE-TIME SERVICES (lower priority)
+        {
+            "name": "Move In/Out Cleaning",
+            "category": "move-in-out",
+            "serviceType": "both",
+            "basePriceResidential": 199.99,
+            "basePriceCommercial": 349.99,
+            "pricePerSqFt": 0.25,
+            "description": "Complete cleaning for moving in or out, ensuring property is spotless for new occupants",
+            "estimatedDuration": 300,
+            "isRecurringService": False,
             "createdAt": datetime.utcnow()
         },
         {
             "name": "Post-Construction Cleaning",
-            "category": "deep-clean",
+            "category": "post-reno",
             "serviceType": "both",
             "basePriceResidential": 299.99,
             "basePriceCommercial": 499.99,
             "pricePerSqFt": 0.30,
             "description": "Specialized cleaning after construction or renovation to remove dust, debris, and prepare space for use",
             "estimatedDuration": 360,
+            "isRecurringService": False,
             "createdAt": datetime.utcnow()
         }
     ]
