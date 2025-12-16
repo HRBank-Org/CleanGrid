@@ -68,7 +68,6 @@ export default function EnhancedQuoteScreen() {
   // Common fields
   const [postalCode, setPostalCode] = useState(user?.postalCode || '');
   const [serviceLevel, setServiceLevel] = useState(getInitialServiceLevel());
-  const [condition, setCondition] = useState('normal');
   const [frequency, setFrequency] = useState(isOneTimeService ? 'one_time' : 'one_time');
   const [timeWindow, setTimeWindow] = useState('normal');
   
