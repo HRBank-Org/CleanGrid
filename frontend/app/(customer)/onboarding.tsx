@@ -176,20 +176,53 @@ export default function OnboardingScreen() {
           </TouchableOpacity>
 
           <View style={styles.stepHeader}>
-            <View style={styles.propertyBadge}>
-              <Ionicons
-                name={propertyType === 'residential' ? 'home' : 'business'}
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={styles.propertyBadgeText}>
-                {propertyType === 'residential' ? 'Residential' : 'Commercial'} Property
-              </Text>
-            </View>
             <Text style={styles.formTitle}>Property Details</Text>
             <Text style={styles.formSubtitle}>
               Quick setup - you can add more properties later
             </Text>
+          </View>
+
+          {/* Property Type Selection */}
+          <Text style={styles.fieldLabel}>Property Type *</Text>
+          <View style={styles.typeSelector}>
+            <TouchableOpacity
+              style={[
+                styles.typeOption,
+                propertyType === 'residential' && styles.typeOptionActive,
+              ]}
+              onPress={() => setPropertyType('residential')}
+            >
+              <Ionicons
+                name="home"
+                size={20}
+                color={propertyType === 'residential' ? colors.primary : colors.gray[400]}
+              />
+              <Text style={[
+                styles.typeOptionText,
+                propertyType === 'residential' && styles.typeOptionTextActive,
+              ]}>
+                Residential
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.typeOption,
+                propertyType === 'commercial' && styles.typeOptionActive,
+              ]}
+              onPress={() => setPropertyType('commercial')}
+            >
+              <Ionicons
+                name="business"
+                size={20}
+                color={propertyType === 'commercial' ? colors.primary : colors.gray[400]}
+              />
+              <Text style={[
+                styles.typeOptionText,
+                propertyType === 'commercial' && styles.typeOptionTextActive,
+              ]}>
+                Commercial
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <Input
