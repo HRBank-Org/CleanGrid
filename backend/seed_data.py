@@ -80,44 +80,57 @@ async def seed_data():
     print("\n🧹 Creating cleaning services...")
     
     services = [
-        # RECURRING SERVICES (top priority)
+        # RESIDENTIAL SERVICES (Budget → Premium)
         {
             "name": "Regular House Cleaning",
             "category": "regular",
-            "serviceType": "both",
+            "serviceType": "residential",
             "basePriceResidential": 89.99,
-            "basePriceCommercial": 149.99,
+            "basePriceCommercial": 0,
             "pricePerSqFt": 0.10,
-            "description": "Standard cleaning service including dusting, vacuuming, mopping, and bathroom/kitchen cleaning",
+            "description": "Standard home cleaning including dusting, vacuuming, mopping, and bathroom/kitchen cleaning",
             "estimatedDuration": 120,
             "isRecurringService": True,
             "createdAt": datetime.utcnow()
         },
         {
-            "name": "Commercial Office Cleaning",
-            "category": "commercial",
-            "serviceType": "commercial",
-            "basePriceResidential": 0,
-            "basePriceCommercial": 249.99,
-            "pricePerSqFt": 0.15,
-            "description": "Professional office cleaning including workspaces, common areas, restrooms, and break rooms",
-            "estimatedDuration": 180,
-            "isRecurringService": True,
-            "createdAt": datetime.utcnow()
-        },
-        {
-            "name": "Deep Cleaning",
+            "name": "Deep House Cleaning",
             "category": "deep-clean",
-            "serviceType": "both",
+            "serviceType": "residential",
             "basePriceResidential": 179.99,
-            "basePriceCommercial": 299.99,
+            "basePriceCommercial": 0,
             "pricePerSqFt": 0.20,
-            "description": "Thorough deep cleaning including baseboards, inside appliances, windows, and detailed cleaning of all areas",
+            "description": "Premium deep cleaning including baseboards, inside appliances, windows, and detailed cleaning of all areas",
             "estimatedDuration": 240,
             "isRecurringService": True,
             "createdAt": datetime.utcnow()
         },
-        # ONE-TIME SERVICES (lower priority)
+        # COMMERCIAL SERVICES (Budget → Premium)
+        {
+            "name": "Regular Commercial Cleaning",
+            "category": "commercial",
+            "serviceType": "commercial",
+            "basePriceResidential": 0,
+            "basePriceCommercial": 149.99,
+            "pricePerSqFt": 0.12,
+            "description": "Standard office cleaning including workspaces, common areas, restrooms, and break rooms",
+            "estimatedDuration": 150,
+            "isRecurringService": True,
+            "createdAt": datetime.utcnow()
+        },
+        {
+            "name": "Deep Commercial Cleaning",
+            "category": "commercial-deep",
+            "serviceType": "commercial",
+            "basePriceResidential": 0,
+            "basePriceCommercial": 299.99,
+            "pricePerSqFt": 0.22,
+            "description": "Premium commercial cleaning with detailed sanitization, high-touch disinfection, and comprehensive workspace deep cleaning",
+            "estimatedDuration": 240,
+            "isRecurringService": True,
+            "createdAt": datetime.utcnow()
+        },
+        # ONE-TIME SERVICES
         {
             "name": "Move In/Out Cleaning",
             "category": "move-in-out",
