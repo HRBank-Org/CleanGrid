@@ -42,6 +42,8 @@ export default function AddProperty() {
       await api.post('/api/properties', {
         name,
         address,
+        apartmentNumber: apartmentNumber || null,
+        buzzNumber: buzzNumber || null,
         postalCode: postalCode.replace(/\s/g, '').toUpperCase(),
         propertyType,
         bedrooms: parseInt(bedrooms) || 0,
