@@ -37,6 +37,15 @@ export default function CustomerLayout() {
         }}
       />
       <Tabs.Screen
+        name="properties"
+        options={{
+          title: 'Properties',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="location" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
@@ -47,6 +56,18 @@ export default function CustomerLayout() {
       />
       <Tabs.Screen
         name="book"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="add-property"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="edit-property"
         options={{
           href: null,
         }}
