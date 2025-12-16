@@ -70,6 +70,8 @@ export default function EditProperty() {
       await api.put(`/api/properties/${propertyId}`, {
         name,
         address,
+        apartmentNumber: apartmentNumber || null,
+        buzzNumber: buzzNumber || null,
         postalCode: postalCode.replace(/\s/g, '').toUpperCase(),
         propertyType,
         bedrooms: parseInt(bedrooms) || 0,
@@ -174,6 +176,23 @@ export default function EditProperty() {
             value={address}
             onChangeText={setAddress}
           />
+
+          <View style={styles.row}>
+            <Input
+              label="Apt/Unit #"
+              placeholder="205"
+              value={apartmentNumber}
+              onChangeText={setApartmentNumber}
+              containerStyle={{ flex: 1, marginRight: 8 }}
+            />
+            <Input
+              label="Buzz Code"
+              placeholder="1234"
+              value={buzzNumber}
+              onChangeText={setBuzzNumber}
+              containerStyle={{ flex: 1, marginLeft: 8 }}
+            />
+          </View>
 
           <Input
             label="Postal Code *"
