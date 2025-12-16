@@ -56,6 +56,10 @@ export default function CustomerHome() {
         return 'exit';
       case 'commercial':
         return 'business';
+      case 'commercial-deep':
+        return 'briefcase';
+      case 'post-reno':
+        return 'construct';
       default:
         return 'checkmark-circle';
     }
