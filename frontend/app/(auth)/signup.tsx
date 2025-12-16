@@ -58,7 +58,8 @@ export default function Signup() {
 
       // Route based on role
       if (user.role === 'customer') {
-        router.replace('/(customer)/home');
+        // New customers go to onboarding to add their first property
+        router.replace('/(customer)/onboarding');
       } else if (user.role === 'franchisee') {
         router.replace('/(franchisee)/dashboard');
       }
