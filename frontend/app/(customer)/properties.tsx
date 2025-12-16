@@ -18,6 +18,8 @@ interface Property {
   _id: string;
   name: string;
   address: string;
+  apartmentNumber?: string;
+  buzzNumber?: string;
   postalCode: string;
   propertyType: string;
   bedrooms?: number;
@@ -116,7 +118,13 @@ export default function PropertiesScreen() {
                 </View>
                 <View style={styles.propertyInfo}>
                   <Text style={styles.propertyName}>{property.name}</Text>
-                  <Text style={styles.propertyAddress}>{property.address}</Text>
+                  <Text style={styles.propertyAddress}>
+                    {property.address}
+                    {property.apartmentNumber ? `, Unit ${property.apartmentNumber}` : ''}
+                  </Text>
+                  {property.buzzNumber && (
+                    <Text style={styles.propertyBuzz}>Buzz: {property.buzzNumber}</Text>
+                  )}
                   <Text style={styles.propertyPostal}>{property.postalCode}</Text>
                 </View>
               </View>
@@ -239,6 +247,11 @@ const styles = StyleSheet.create({
   propertyPostal: {
     fontSize: 13,
     color: colors.textSecondary,
+  },
+  propertyBuzz: {
+    fontSize: 13,
+    color: colors.secondary,
+    marginBottom: 2,
   },
   propertyDetails: {
     flexDirection: 'row',
