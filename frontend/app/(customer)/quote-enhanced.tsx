@@ -239,31 +239,47 @@ export default function EnhancedQuoteScreen() {
             </View>
           )}
 
-          {/* Job Type Selection */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Job Type</Text>
-            <View style={styles.radioGroup}>
-              <TouchableOpacity
-                style={[styles.radioCard, jobType === 'residential' && styles.radioCardActive]}
-                onPress={() => setJobType('residential')}
-              >
-                <Ionicons name="home" size={24} color={jobType === 'residential' ? colors.primary : colors.gray[400]} />
-                <Text style={[styles.radioText, jobType === 'residential' && styles.radioTextActive]}>
-                  Residential
-                </Text>
-              </TouchableOpacity>
+          {/* Job Type Selection - Only show when not coming from service card */}
+          {!serviceName && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Job Type</Text>
+              <View style={styles.radioGroup}>
+                <TouchableOpacity
+                  style={[styles.radioCard, jobType === 'residential' && styles.radioCardActive]}
+                  onPress={() => setJobType('residential')}
+                >
+                  <Ionicons name="home" size={24} color={jobType === 'residential' ? colors.primary : colors.gray[400]} />
+                  <Text style={[styles.radioText, jobType === 'residential' && styles.radioTextActive]}>
+                    Residential
+                  </Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.radioCard, jobType === 'commercial' && styles.radioCardActive]}
-                onPress={() => setJobType('commercial')}
-              >
-                <Ionicons name="business" size={24} color={jobType === 'commercial' ? colors.primary : colors.gray[400]} />
-                <Text style={[styles.radioText, jobType === 'commercial' && styles.radioTextActive]}>
-                  Commercial
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.radioCard, jobType === 'commercial' && styles.radioCardActive]}
+                  onPress={() => setJobType('commercial')}
+                >
+                  <Ionicons name="business" size={24} color={jobType === 'commercial' ? colors.primary : colors.gray[400]} />
+                  <Text style={[styles.radioText, jobType === 'commercial' && styles.radioTextActive]}>
+                    Commercial
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          )}
+          
+          {/* Show selected job type badge when coming from service */}
+          {serviceName && (
+            <View style={styles.selectedServiceBadge}>
+              <Ionicons 
+                name={jobType === 'residential' ? 'home' : 'business'} 
+                size={20} 
+                color={colors.primary} 
+              />
+              <Text style={styles.selectedServiceText}>
+                {jobType === 'residential' ? 'Residential' : 'Commercial'} Service
+              </Text>
+            </View>
+          )}
 
           {/* Postal Code */}
           <Input
