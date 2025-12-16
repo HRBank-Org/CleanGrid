@@ -311,7 +311,7 @@ async def get_service(service_id: str):
     service["_id"] = str(service["_id"])
     return Service(**service)
 
-# QUOTE ROUTES
+# QUOTE ROUTES (Legacy - kept for backward compatibility)
 @api_router.post("/quotes", response_model=QuoteResponse)
 async def calculate_quote(quote_req: QuoteRequest):
     service = await db.services.find_one({"_id": ObjectId(quote_req.serviceId)})
@@ -346,6 +346,28 @@ async def calculate_quote(quote_req: QuoteRequest):
         isRecurring=quote_req.isRecurring,
         frequency=quote_req.frequency
     )
+
+# ENHANCED QUOTE ROUTES (CleanUnits-based)
+calculator = QuoteCalculator()
+
+@api_router.post("/quotes/enhanced", response_model=EnhancedQuoteResponse)
+async def calculate_enhanced_quote(quote_req: EnhancedQuoteRequest):
+    """
+    Enhanced quote calculator with CleanUnits system
+    Supports residential and commercial with real-time pricing
+    """
+    try:
+        quote = calculator.calculate_quote(quote_req)
+        return quote
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Quote calculation failed: {str(e)}")
+
+@api_router.get("/quotes/addons")
+async def get_available_addons():
+    """Get list of available add-on services"""
+    return {"addons": AVAILABLE_ADDONS}
 
 # BOOKING ROUTES
 @api_router.post("/bookings", response_model=Booking)
