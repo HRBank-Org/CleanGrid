@@ -142,7 +142,7 @@ export default function EnhancedQuoteScreen() {
         job_type: jobType,
         postal_code: postalCode,
         service_level: serviceLevel,
-        condition: condition,
+        condition: 'normal', // Always normal - service level determines intensity
         frequency: frequency,
         time_window: timeWindow,
         tax_rate: 0.13,
