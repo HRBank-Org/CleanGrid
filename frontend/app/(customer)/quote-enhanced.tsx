@@ -117,7 +117,7 @@ export default function EnhancedQuoteScreen() {
 
     return () => clearTimeout(timer);
   }, [
-    jobType, postalCode, serviceLevel, condition, frequency, timeWindow,
+    jobType, postalCode, serviceLevel, frequency, timeWindow,
     bedrooms, bathrooms, kitchen, livingRooms, diningRooms, stairs, hallways, laundryRoom,
     sqft, washrooms, kitchenette, floorService, trashService, highTouchDisinfection,
     selectedAddons
