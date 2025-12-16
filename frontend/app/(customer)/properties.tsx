@@ -203,11 +203,14 @@ export default function PropertiesScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.actionButton}
+                  style={[styles.actionButton, deleting === property._id && styles.actionButtonDisabled]}
                   onPress={() => handleDelete(property._id, property.name)}
+                  disabled={deleting === property._id}
                 >
-                  <Ionicons name="trash" size={18} color={colors.error} />
-                  <Text style={[styles.actionText, { color: colors.error }]}>Delete</Text>
+                  <Ionicons name="trash" size={18} color={deleting === property._id ? colors.gray[400] : colors.error} />
+                  <Text style={[styles.actionText, { color: deleting === property._id ? colors.gray[400] : colors.error }]}>
+                    {deleting === property._id ? 'Deleting...' : 'Delete'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
