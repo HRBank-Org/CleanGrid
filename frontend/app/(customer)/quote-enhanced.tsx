@@ -750,6 +750,22 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '600',
   },
+  oneTimeNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray[50],
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.secondary,
+  },
+  oneTimeNoticeText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 12,
+    lineHeight: 18,
+  },
   row: {
     flexDirection: 'row',
     marginBottom: 0,
