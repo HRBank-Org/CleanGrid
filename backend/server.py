@@ -76,12 +76,54 @@ class User(UserBase):
     address: Optional[str] = None
     postalCode: Optional[str] = None
     assignedFSAs: Optional[List[str]] = []
+    franchiseeId: Optional[str] = None  # For workforce: which franchisee they work for
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
         populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+# Property Models
+class PropertyCreate(BaseModel):
+    name: str  # e.g., "Home", "Downtown Office", "Vacation House"
+    address: str
+    postalCode: str
+    propertyType: str  # residential, commercial
+    bedrooms: Optional[int] = 0
+    bathrooms: Optional[int] = 0
+    squareFeet: Optional[int] = 0
+    notes: Optional[str] = None
+
+class Property(PropertyCreate):
+    id: str = Field(alias="_id")
+    customerId: str
+    fsaCode: str
+    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+# Task Models
+class Task(BaseModel):
+    id: str = Field(alias="_id")
+    bookingId: str
+    taskType: str  # room, addon, appliance
+    name: str
+    description: Optional[str] = None
+    isCompleted: bool = False
+    completedBy: Optional[str] = None  # workforce user id
+    completedAt: Optional[datetime] = None
+    notes: Optional[str] = None
+    
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+class TaskUpdate(BaseModel):
+    isCompleted: bool
+    notes: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
