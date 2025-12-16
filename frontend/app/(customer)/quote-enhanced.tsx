@@ -53,7 +53,7 @@ export default function EnhancedQuoteScreen() {
   };
   
   const getInitialServiceLevel = (): string => {
-    if (serviceCategory === 'deep-clean') return 'deep';
+    if (serviceCategory === 'deep-clean' || serviceCategory === 'commercial-deep') return 'deep';
     if (serviceCategory === 'move-in-out') return 'move_in_out';
     if (serviceCategory === 'post-reno') return 'post_reno';
     return 'standard';
