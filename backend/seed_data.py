@@ -191,6 +191,10 @@ async def seed_data():
     print("   - Email: franchisee@test.com")
     print("   - Password: franchisee123")
     print("   - FSA Codes: 3A8, 2B7, 1C6")
+    print("\n   Workforce:")
+    print("   - Email: worker@test.com")
+    print("   - Password: worker123")
+    print(f"   - Works for franchisee ID: {franchisee_id}")
     print("\n" + "="*60)
     print("\n🚀 You can now log in to the app with these credentials!")
     
