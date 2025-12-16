@@ -69,6 +69,12 @@ export default function CustomerLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="quote-enhanced"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
