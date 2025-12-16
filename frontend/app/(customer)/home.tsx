@@ -79,6 +79,22 @@ export default function CustomerHome() {
           </View>
         </View>
 
+        <TouchableOpacity
+          style={styles.enhancedQuoteButton}
+          onPress={() => router.push('/(customer)/quote-enhanced')}
+        >
+          <View style={styles.enhancedQuoteContent}>
+            <Ionicons name="calculator" size={28} color={colors.white} />
+            <View style={styles.enhancedQuoteText}>
+              <Text style={styles.enhancedQuoteTitle}>Get Live Quote</Text>
+              <Text style={styles.enhancedQuoteSubtitle}>
+                Instant pricing with CleanUnits calculator
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="arrow-forward" size={24} color={colors.white} />
+        </TouchableOpacity>
+
         <View style={styles.quickActions}>
           <TouchableOpacity
             style={styles.quickAction}
