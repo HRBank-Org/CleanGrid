@@ -102,7 +102,7 @@ export default function CustomerHome() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={loadServices} />
+          <RefreshControl refreshing={loading} onRefresh={loadData} />
         }
       >
         <View style={styles.header}>
