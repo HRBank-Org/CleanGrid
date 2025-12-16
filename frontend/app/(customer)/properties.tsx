@@ -47,30 +47,39 @@ export default function PropertiesScreen() {
     loadProperties();
   }, []);
 
-  const handleDelete = (propertyId: string, propertyName: string) => {
-    Alert.alert(
-      'Delete Property',
-      `Are you sure you want to delete "${propertyName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.delete(`/api/properties/${propertyId}`);
-              Alert.alert('Success', 'Property deleted');
-              loadProperties();
-            } catch (error: any) {
-              Alert.alert(
-                'Error',
-                error.response?.data?.detail || 'Failed to delete property'
-              );
-            }
-          },
-        },
-      ]
-    );
+  const handleDelete = async (propertyId: string, propertyName: string) => {
+    // Use confirm for web compatibility, Alert.alert for native
+    const shouldDelete = Platform.OS === 'web' 
+      ? window.confirm(`Are you sure you want to delete "${propertyName}"?`)
+      : await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Delete Property',
+            `Are you sure you want to delete "${propertyName}"?`,
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          );
+        });
+
+    if (shouldDelete) {
+      try {
+        await api.delete(`/api/properties/${propertyId}`);
+        if (Platform.OS === 'web') {
+          window.alert('Property deleted successfully');
+        } else {
+          Alert.alert('Success', 'Property deleted');
+        }
+        loadProperties();
+      } catch (error: any) {
+        const errorMsg = error.response?.data?.detail || 'Failed to delete property';
+        if (Platform.OS === 'web') {
+          window.alert(`Error: ${errorMsg}`);
+        } else {
+          Alert.alert('Error', errorMsg);
+        }
+      }
+    }
   };
 
   return (
