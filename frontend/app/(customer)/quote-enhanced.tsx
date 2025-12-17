@@ -223,48 +223,95 @@ export default function EnhancedQuoteScreen() {
 
   const [bookingLoading, setBookingLoading] = useState(false);
 
+  // Date/Time helpers
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-CA', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-CA', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const handleDateChange = (event: any, date?: Date) => {
+    setShowDatePicker(false);
+    if (date) {
+      const newDate = new Date(scheduledDate);
+      newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+      setScheduledDate(newDate);
+    }
+  };
+
+  const handleTimeChange = (event: any, time?: Date) => {
+    setShowTimePicker(false);
+    if (time) {
+      const newDate = new Date(scheduledDate);
+      newDate.setHours(time.getHours(), time.getMinutes(), 0, 0);
+      setScheduledDate(newDate);
+    }
+  };
+
+  // Calculate end time based on estimated hours
+  const getEndTime = () => {
+    if (!quote) return '';
+    const endTime = new Date(scheduledDate);
+    endTime.setMinutes(endTime.getMinutes() + Math.ceil(quote.estimated_hours * 60));
+    return formatTime(endTime);
+  };
+
   const proceedToBooking = async () => {
     if (!quote || !selectedProperty) return;
+    
+    // Validate date is in the future
+    if (scheduledDate <= new Date()) {
+      const msg = 'Please select a date and time in the future';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Invalid Date', msg);
+      return;
+    }
     
     try {
       setBookingLoading(true);
       
-      // Create the booking
+      // Create the booking (work order)
       const bookingData = {
         serviceId: serviceId || 'general-cleaning',
         serviceType: selectedProperty.propertyType,
         address: selectedProperty.address + (selectedProperty.apartmentNumber ? `, Unit ${selectedProperty.apartmentNumber}` : ''),
         postalCode: selectedProperty.postalCode,
         squareFeet: selectedProperty.squareFeet || 1000,
-        scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default to 1 week from now
+        scheduledDate: scheduledDate.toISOString(),
         isRecurring: frequency !== 'one_time',
         recurringFrequency: frequency !== 'one_time' ? frequency : null,
         totalPrice: quote.grand_total,
-        notes: `Service: ${serviceLevel}, Add-ons: ${selectedAddons.map(a => a.name).join(', ') || 'None'}`,
+        notes: `Service: ${serviceLevel} | Est. ${quote.estimated_hours.toFixed(1)}h | Crew: ${quote.recommended_crew_size} | Add-ons: ${selectedAddons.map(a => a.name).join(', ') || 'None'}`,
       };
 
       await api.post('/api/bookings', bookingData);
       
+      const successMsg = `Work order created!\n\nDate: ${formatDate(scheduledDate)}\nTime: ${formatTime(scheduledDate)} - ${getEndTime()}\nTotal: $${quote.grand_total.toFixed(2)}`;
+      
       if (Platform.OS === 'web') {
-        window.alert(`Booking created! Total: $${quote.grand_total.toFixed(2)}\nWe'll contact you to confirm the date.`);
+        window.alert(successMsg);
+        router.push('/(customer)/bookings');
       } else {
         Alert.alert(
-          'Booking Created!', 
-          `Total: $${quote.grand_total.toFixed(2)}\nWe'll contact you to confirm the date.`,
-          [{ text: 'OK', onPress: () => router.push('/(customer)/bookings') }]
+          'Booking Confirmed!', 
+          successMsg,
+          [{ text: 'View Bookings', onPress: () => router.push('/(customer)/bookings') }]
         );
       }
-      
-      // Navigate to bookings
-      router.push('/(customer)/bookings');
     } catch (error: any) {
       console.error('Booking error:', error);
       const errorMsg = error.response?.data?.detail || 'Failed to create booking';
-      if (Platform.OS === 'web') {
-        window.alert('Error: ' + errorMsg);
-      } else {
-        Alert.alert('Error', errorMsg);
-      }
+      Platform.OS === 'web' ? window.alert('Error: ' + errorMsg) : Alert.alert('Error', errorMsg);
     } finally {
       setBookingLoading(false);
     }
