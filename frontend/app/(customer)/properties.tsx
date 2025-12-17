@@ -199,24 +199,43 @@ export default function PropertiesScreen() {
                   <Text style={styles.actionText}>Edit</Text>
                 </TouchableOpacity>
 
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionButton,
-                    styles.deleteButton,
-                    deleting === property._id && styles.actionButtonDisabled,
-                    pressed && styles.buttonPressed,
-                  ]}
-                  onPress={() => {
-                    console.log('Delete button pressed for:', property._id);
-                    handleDelete(property._id, property.name);
-                  }}
-                  disabled={deleting === property._id}
-                >
-                  <Ionicons name="trash" size={18} color={deleting === property._id ? colors.gray[400] : colors.error} />
-                  <Text style={[styles.actionText, { color: deleting === property._id ? colors.gray[400] : colors.error }]}>
-                    {deleting === property._id ? 'Deleting...' : 'Delete'}
-                  </Text>
-                </Pressable>
+                {Platform.OS === 'web' ? (
+                  <button
+                    onClick={() => {
+                      console.log('Web delete clicked:', property._id);
+                      handleDelete(property._id, property.name);
+                    }}
+                    disabled={deleting === property._id}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      backgroundColor: '#f5f5f5',
+                      border: 'none',
+                      cursor: deleting === property._id ? 'not-allowed' : 'pointer',
+                      opacity: deleting === property._id ? 0.6 : 1,
+                    }}
+                  >
+                    <Ionicons name="trash" size={18} color={deleting === property._id ? colors.gray[400] : colors.error} />
+                    <Text style={[styles.actionText, { color: deleting === property._id ? colors.gray[400] : colors.error }]}>
+                      {deleting === property._id ? 'Deleting...' : 'Delete'}
+                    </Text>
+                  </button>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.actionButton, deleting === property._id && styles.actionButtonDisabled]}
+                    onPress={() => handleDelete(property._id, property.name)}
+                    disabled={deleting === property._id}
+                  >
+                    <Ionicons name="trash" size={18} color={deleting === property._id ? colors.gray[400] : colors.error} />
+                    <Text style={[styles.actionText, { color: deleting === property._id ? colors.gray[400] : colors.error }]}>
+                      {deleting === property._id ? 'Deleting...' : 'Delete'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           ))
