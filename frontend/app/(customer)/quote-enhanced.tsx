@@ -541,9 +541,10 @@ export default function EnhancedQuoteScreen() {
           )}
 
           <Button
-            title="Proceed to Booking"
+            title={bookingLoading ? "Creating Booking..." : "Book Now"}
             onPress={proceedToBooking}
-            disabled={!quote || !selectedProperty}
+            disabled={!quote || !selectedProperty || bookingLoading}
+            loading={bookingLoading}
             style={{ marginTop: 24 }}
           />
         </ScrollView>
