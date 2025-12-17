@@ -33,21 +33,64 @@ export default function BookingsScreen() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   const loadBookings = async () => {
     try {
+      setLoading(true);
       const response = await api.get('/api/bookings');
       setBookings(response.data);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load bookings');
+      console.error('Failed to load bookings:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadBookings();
-  }, []);
+  // Reload on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      loadBookings();
+    }, [])
+  );
+
+  const handleCancelBooking = (bookingId: string) => {
+    const doCancel = async () => {
+      try {
+        setCancelling(bookingId);
+        await api.delete(`/api/bookings/${bookingId}`);
+        
+        // Update local state
+        setBookings(prev => prev.map(b => 
+          b._id === bookingId ? { ...b, status: 'cancelled' } : b
+        ));
+        
+        const msg = 'Booking cancelled successfully';
+        Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Cancelled', msg);
+      } catch (error: any) {
+        const errorMsg = error.response?.data?.detail || 'Failed to cancel booking';
+        Platform.OS === 'web' ? window.alert('Error: ' + errorMsg) : Alert.alert('Error', errorMsg);
+      } finally {
+        setCancelling(null);
+      }
+    };
+
+    // Confirmation
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to cancel this booking?')) {
+        doCancel();
+      }
+    } else {
+      Alert.alert(
+        'Cancel Booking',
+        'Are you sure you want to cancel this booking?',
+        [
+          { text: 'No', style: 'cancel' },
+          { text: 'Yes, Cancel', style: 'destructive', onPress: doCancel },
+        ]
+      );
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
