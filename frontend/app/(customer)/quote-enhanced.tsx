@@ -85,6 +85,17 @@ export default function EnhancedQuoteScreen() {
   // Quote data
   const [quote, setQuote] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Date/Time selection
+  const [scheduledDate, setScheduledDate] = useState<Date>(() => {
+    // Default to next available day at 9 AM
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    date.setHours(9, 0, 0, 0);
+    return date;
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   // Load properties on focus
   useFocusEffect(
