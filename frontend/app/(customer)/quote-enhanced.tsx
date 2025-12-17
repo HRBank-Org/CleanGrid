@@ -1046,4 +1046,73 @@ const styles = StyleSheet.create({
   breakdownDiscount: {
     color: colors.success,
   },
+  dateTimeRow: {
+    gap: 12,
+  },
+  dateTimeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dateTimeInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  dateTimeLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  dateTimeValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 2,
+  },
+  timeEstimate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray[50],
+    borderRadius: 8,
+    padding: 12,
+    gap: 8,
+  },
+  timeEstimateText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalClose: {
+    marginTop: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
 });
