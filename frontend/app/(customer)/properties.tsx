@@ -61,30 +61,58 @@ export default function PropertiesScreen() {
   );
 
   const handleDelete = (propertyId: string, propertyName: string) => {
-    // Simple confirmation and delete
+    // Immediate feedback
+    if (Platform.OS === 'web') {
+      alert('Delete button clicked! Property: ' + propertyName);
+    }
+    
+    // Simple confirmation and delete using native fetch for web
     const doDelete = async () => {
       try {
         setDeleting(propertyId);
-        const response = await api.delete(`/api/properties/${propertyId}`);
-        console.log('Delete response:', response.status);
         
-        // Remove from local state immediately
-        setProperties(prev => prev.filter(p => p._id !== propertyId));
+        // Get token from localStorage for web
+        const token = Platform.OS === 'web' ? localStorage.getItem('token') : null;
+        const baseUrl = process.env.EXPO_PUBLIC_BACKEND_URL || '';
         
+        console.log('Deleting property:', propertyId);
+        console.log('Token exists:', !!token);
+        console.log('URL:', `${baseUrl}/api/properties/${propertyId}`);
+        
+        // Use native fetch for web to bypass any axios issues
         if (Platform.OS === 'web') {
-          window.alert('Property deleted!');
+          const response = await fetch(`${baseUrl}/api/properties/${propertyId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': token ? `Bearer ${token}` : '',
+            },
+          });
+          
+          console.log('Fetch response status:', response.status);
+          
+          if (response.ok) {
+            setProperties(prev => prev.filter(p => p._id !== propertyId));
+            alert('Property deleted successfully!');
+          } else {
+            const error = await response.json();
+            alert('Delete failed: ' + (error.detail || response.statusText));
+          }
         } else {
+          // Use axios for mobile
+          const response = await api.delete(`/api/properties/${propertyId}`);
+          console.log('Delete response:', response.status);
+          setProperties(prev => prev.filter(p => p._id !== propertyId));
           Alert.alert('Success', 'Property deleted');
         }
       } catch (error: any) {
         console.error('Delete error:', error);
-        const errorMsg = error.response?.data?.detail || 'Failed to delete';
+        const errorMsg = error.response?.data?.detail || error.message || 'Failed to delete';
         if (Platform.OS === 'web') {
-          window.alert('Error: ' + errorMsg);
+          alert('Error: ' + errorMsg);
         } else {
           Alert.alert('Error', errorMsg);
         }
-        // Reload to get fresh data
         loadProperties();
       } finally {
         setDeleting(null);
