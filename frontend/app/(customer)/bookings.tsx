@@ -125,51 +125,80 @@ export default function BookingsScreen() {
     (b) => ['completed', 'cancelled'].includes(b.status)
   );
 
+  const canCancel = (status: string) => {
+    return ['pending', 'assigned'].includes(status);
+  };
+
   const renderBookingCard = (booking: Booking) => (
-    <TouchableOpacity
-      key={booking._id}
-      style={styles.bookingCard}
-      onPress={() =>
-        router.push({
-          pathname: '/(customer)/booking-detail',
-          params: { bookingId: booking._id },
-        })
-      }
-    >
-      <View style={styles.bookingHeader}>
-        <View style={styles.statusBadge}>
-          <Ionicons
-            name={getStatusIcon(booking.status) as any}
-            size={16}
-            color={getStatusColor(booking.status)}
-          />
-          <Text
-            style={[
-              styles.statusText,
-              { color: getStatusColor(booking.status) },
-            ]}
-          >
-            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-          </Text>
-        </View>
-        {booking.isRecurring && (
-          <View style={styles.recurringBadge}>
-            <Ionicons name="repeat" size={14} color={colors.secondary} />
-            <Text style={styles.recurringText}>Recurring</Text>
+    <View key={booking._id} style={styles.bookingCard}>
+      <TouchableOpacity
+        onPress={() =>
+          router.push({
+            pathname: '/(customer)/booking-detail',
+            params: { bookingId: booking._id },
+          })
+        }
+      >
+        <View style={styles.bookingHeader}>
+          <View style={styles.statusBadge}>
+            <Ionicons
+              name={getStatusIcon(booking.status) as any}
+              size={16}
+              color={getStatusColor(booking.status)}
+            />
+            <Text
+              style={[
+                styles.statusText,
+                { color: getStatusColor(booking.status) },
+              ]}
+            >
+              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+            </Text>
           </View>
-        )}
-      </View>
+          {booking.isRecurring && (
+            <View style={styles.recurringBadge}>
+              <Ionicons name="repeat" size={14} color={colors.secondary} />
+              <Text style={styles.recurringText}>Recurring</Text>
+            </View>
+          )}
+        </View>
 
-      <Text style={styles.bookingAddress}>{booking.address}</Text>
-      <Text style={styles.bookingDate}>
-        {format(new Date(booking.scheduledDate), 'MMM dd, yyyy')}
-      </Text>
+        <Text style={styles.bookingAddress}>{booking.address}</Text>
+        <Text style={styles.bookingDate}>
+          {format(new Date(booking.scheduledDate), 'MMM dd, yyyy • h:mm a')}
+        </Text>
 
-      <View style={styles.bookingFooter}>
-        <Text style={styles.bookingPrice}>${booking.totalPrice}</Text>
-        <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-      </View>
-    </TouchableOpacity>
+        <View style={styles.bookingFooter}>
+          <Text style={styles.bookingPrice}>${booking.totalPrice.toFixed(2)}</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
+        </View>
+      </TouchableOpacity>
+
+      {/* Cancel button for pending/assigned bookings */}
+      {canCancel(booking.status) && (
+        <Pressable
+          style={({ pressed }) => [
+            styles.cancelButton,
+            pressed && styles.cancelButtonPressed,
+            cancelling === booking._id && styles.cancelButtonDisabled,
+          ]}
+          onPress={() => handleCancelBooking(booking._id)}
+          disabled={cancelling === booking._id}
+        >
+          <Ionicons 
+            name="close-circle-outline" 
+            size={18} 
+            color={cancelling === booking._id ? colors.gray[400] : colors.error} 
+          />
+          <Text style={[
+            styles.cancelButtonText,
+            cancelling === booking._id && styles.cancelButtonTextDisabled
+          ]}>
+            {cancelling === booking._id ? 'Cancelling...' : 'Cancel Booking'}
+          </Text>
+        </Pressable>
+      )}
+    </View>
   );
 
   return (
