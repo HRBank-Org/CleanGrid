@@ -193,14 +193,17 @@ export default function BookingsScreen() {
 
       {/* Cancel button for pending/assigned bookings */}
       {canCancel(booking.status) && (
-        <Pressable
-          style={({ pressed }) => [
+        <TouchableOpacity
+          style={[
             styles.cancelButton,
-            pressed && styles.cancelButtonPressed,
             cancelling === booking._id && styles.cancelButtonDisabled,
           ]}
-          onPress={() => handleCancelBooking(booking._id)}
+          onPress={() => {
+            console.log('Cancel button pressed');
+            handleCancelBooking(booking._id);
+          }}
           disabled={cancelling === booking._id}
+          activeOpacity={0.7}
         >
           <Ionicons 
             name="close-circle-outline" 
@@ -213,7 +216,7 @@ export default function BookingsScreen() {
           ]}>
             {cancelling === booking._id ? 'Cancelling...' : 'Cancel Booking'}
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       )}
     </View>
   );
