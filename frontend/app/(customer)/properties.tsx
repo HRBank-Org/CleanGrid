@@ -331,6 +331,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: colors.gray[50],
   },
+  deleteButton: {
+    cursor: 'pointer',
+  },
+  buttonPressed: {
+    opacity: 0.7,
+  },
   actionButtonDisabled: {
     opacity: 0.6,
   },
