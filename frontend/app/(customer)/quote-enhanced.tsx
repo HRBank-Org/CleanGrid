@@ -208,13 +208,52 @@ export default function EnhancedQuoteScreen() {
     ));
   };
 
-  const proceedToBooking = () => {
+  const [bookingLoading, setBookingLoading] = useState(false);
+
+  const proceedToBooking = async () => {
     if (!quote || !selectedProperty) return;
     
-    if (Platform.OS === 'web') {
-      window.alert('Booking flow coming soon! Quote: $' + quote.grand_total.toFixed(2));
-    } else {
-      Alert.alert('Coming Soon', 'Booking flow with enhanced quote will be integrated next!');
+    try {
+      setBookingLoading(true);
+      
+      // Create the booking
+      const bookingData = {
+        serviceId: serviceId || 'general-cleaning',
+        serviceType: selectedProperty.propertyType,
+        address: selectedProperty.address + (selectedProperty.apartmentNumber ? `, Unit ${selectedProperty.apartmentNumber}` : ''),
+        postalCode: selectedProperty.postalCode,
+        squareFeet: selectedProperty.squareFeet || 1000,
+        scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default to 1 week from now
+        isRecurring: frequency !== 'one_time',
+        recurringFrequency: frequency !== 'one_time' ? frequency : null,
+        totalPrice: quote.grand_total,
+        notes: `Service: ${serviceLevel}, Add-ons: ${selectedAddons.map(a => a.name).join(', ') || 'None'}`,
+      };
+
+      await api.post('/api/bookings', bookingData);
+      
+      if (Platform.OS === 'web') {
+        window.alert(`Booking created! Total: $${quote.grand_total.toFixed(2)}\nWe'll contact you to confirm the date.`);
+      } else {
+        Alert.alert(
+          'Booking Created!', 
+          `Total: $${quote.grand_total.toFixed(2)}\nWe'll contact you to confirm the date.`,
+          [{ text: 'OK', onPress: () => router.push('/(customer)/bookings') }]
+        );
+      }
+      
+      // Navigate to bookings
+      router.push('/(customer)/bookings');
+    } catch (error: any) {
+      console.error('Booking error:', error);
+      const errorMsg = error.response?.data?.detail || 'Failed to create booking';
+      if (Platform.OS === 'web') {
+        window.alert('Error: ' + errorMsg);
+      } else {
+        Alert.alert('Error', errorMsg);
+      }
+    } finally {
+      setBookingLoading(false);
     }
   };
 
