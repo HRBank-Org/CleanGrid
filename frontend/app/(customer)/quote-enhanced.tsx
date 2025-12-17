@@ -536,6 +536,114 @@ export default function EnhancedQuoteScreen() {
             )}
           </View>
 
+          {/* Schedule Date & Time */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Schedule Your Cleaning</Text>
+            <View style={styles.dateTimeRow}>
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                <View style={styles.dateTimeInfo}>
+                  <Text style={styles.dateTimeLabel}>Date</Text>
+                  <Text style={styles.dateTimeValue}>{formatDate(scheduledDate)}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Ionicons name="time-outline" size={20} color={colors.primary} />
+                <View style={styles.dateTimeInfo}>
+                  <Text style={styles.dateTimeLabel}>Start Time</Text>
+                  <Text style={styles.dateTimeValue}>{formatTime(scheduledDate)}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
+              </TouchableOpacity>
+            </View>
+
+            {quote && (
+              <View style={styles.timeEstimate}>
+                <Ionicons name="hourglass-outline" size={16} color={colors.textSecondary} />
+                <Text style={styles.timeEstimateText}>
+                  Estimated finish: {getEndTime()} (~{quote.estimated_hours.toFixed(1)} hours)
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Date Picker Modal for Web */}
+          {Platform.OS === 'web' && showDatePicker && (
+            <Modal transparent animationType="fade" visible={showDatePicker}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Select Date</Text>
+                  <input
+                    type="date"
+                    value={scheduledDate.toISOString().split('T')[0]}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      const date = new Date(e.target.value);
+                      date.setHours(scheduledDate.getHours(), scheduledDate.getMinutes());
+                      setScheduledDate(date);
+                      setShowDatePicker(false);
+                    }}
+                    style={{ fontSize: 18, padding: 12, borderRadius: 8, border: '1px solid #ddd', width: '100%' }}
+                  />
+                  <TouchableOpacity style={styles.modalClose} onPress={() => setShowDatePicker(false)}>
+                    <Text style={styles.modalCloseText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+          )}
+
+          {/* Time Picker Modal for Web */}
+          {Platform.OS === 'web' && showTimePicker && (
+            <Modal transparent animationType="fade" visible={showTimePicker}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Select Time</Text>
+                  <input
+                    type="time"
+                    value={`${scheduledDate.getHours().toString().padStart(2, '0')}:${scheduledDate.getMinutes().toString().padStart(2, '0')}`}
+                    onChange={(e) => {
+                      const [hours, minutes] = e.target.value.split(':');
+                      const newDate = new Date(scheduledDate);
+                      newDate.setHours(parseInt(hours), parseInt(minutes));
+                      setScheduledDate(newDate);
+                      setShowTimePicker(false);
+                    }}
+                    style={{ fontSize: 18, padding: 12, borderRadius: 8, border: '1px solid #ddd', width: '100%' }}
+                  />
+                  <TouchableOpacity style={styles.modalClose} onPress={() => setShowTimePicker(false)}>
+                    <Text style={styles.modalCloseText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+          )}
+
+          {/* Native Date/Time Pickers */}
+          {Platform.OS !== 'web' && showDatePicker && (
+            <DateTimePicker
+              value={scheduledDate}
+              mode="date"
+              minimumDate={new Date()}
+              onChange={handleDateChange}
+            />
+          )}
+          {Platform.OS !== 'web' && showTimePicker && (
+            <DateTimePicker
+              value={scheduledDate}
+              mode="time"
+              onChange={handleTimeChange}
+            />
+          )}
+
           {/* Add-ons */}
           {availableAddons.length > 0 && (
             <View style={styles.section}>
