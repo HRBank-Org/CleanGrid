@@ -59,55 +59,51 @@ export default function PropertiesScreen() {
     }, [])
   );
 
-  const handleDelete = async (propertyId: string, propertyName: string) => {
-    console.log('Delete initiated for:', propertyId, propertyName);
-    
-    // Use confirm for web compatibility
-    let shouldDelete = false;
-    
-    if (Platform.OS === 'web') {
-      shouldDelete = window.confirm(`Are you sure you want to delete "${propertyName}"?`);
-    } else {
-      shouldDelete = await new Promise<boolean>((resolve) => {
-        Alert.alert(
-          'Delete Property',
-          `Are you sure you want to delete "${propertyName}"?`,
-          [
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
-          ]
-        );
-      });
-    }
-
-    console.log('Should delete:', shouldDelete);
-
-    if (shouldDelete) {
+  const handleDelete = (propertyId: string, propertyName: string) => {
+    // Simple confirmation and delete
+    const doDelete = async () => {
       try {
         setDeleting(propertyId);
-        console.log('Calling DELETE API for:', propertyId);
-        await api.delete(`/api/properties/${propertyId}`);
-        console.log('DELETE successful');
+        const response = await api.delete(`/api/properties/${propertyId}`);
+        console.log('Delete response:', response.status);
+        
+        // Remove from local state immediately
+        setProperties(prev => prev.filter(p => p._id !== propertyId));
         
         if (Platform.OS === 'web') {
-          window.alert('Property deleted successfully');
+          window.alert('Property deleted!');
         } else {
           Alert.alert('Success', 'Property deleted');
         }
-        
-        // Refresh the list
-        await loadProperties();
       } catch (error: any) {
-        console.error('DELETE failed:', error);
-        const errorMsg = error.response?.data?.detail || 'Failed to delete property';
+        console.error('Delete error:', error);
+        const errorMsg = error.response?.data?.detail || 'Failed to delete';
         if (Platform.OS === 'web') {
-          window.alert(`Error: ${errorMsg}`);
+          window.alert('Error: ' + errorMsg);
         } else {
           Alert.alert('Error', errorMsg);
         }
+        // Reload to get fresh data
+        loadProperties();
       } finally {
         setDeleting(null);
       }
+    };
+
+    // Confirmation
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Delete "${propertyName}"?`)) {
+        doDelete();
+      }
+    } else {
+      Alert.alert(
+        'Delete Property',
+        `Are you sure you want to delete "${propertyName}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: doDelete },
+        ]
+      );
     }
   };
 
