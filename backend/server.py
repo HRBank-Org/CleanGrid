@@ -8,6 +8,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import os
 import logging
+import httpx
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
