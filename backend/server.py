@@ -190,6 +190,9 @@ class Booking(BookingCreate):
     escrowStatus: str = "held"  # held, released-to-franchisee, released-to-company
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     completedAt: Optional[datetime] = None
+    # HR Bank integration fields
+    hrbankTaskId: Optional[str] = None
+    hrbankWorkplace: Optional[str] = None
     
     class Config:
         populate_by_name = True
