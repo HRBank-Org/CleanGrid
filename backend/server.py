@@ -254,10 +254,10 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 # ==================== HELPER FUNCTIONS ====================
 
 def extract_fsa(postal_code: str) -> str:
-    """Extract last 3 characters from postal code (e.g., M5V3A8 -> 3A8)"""
+    """Extract FIRST 3 characters from postal code (e.g., N8L1E6 -> N8L)"""
     clean_code = postal_code.replace(" ", "").upper()
     if len(clean_code) >= 3:
-        return clean_code[-3:]
+        return clean_code[:3]  # FIRST 3 characters, not last
     return clean_code
 
 async def find_franchisee_by_fsa(fsa_code: str) -> Optional[dict]:
