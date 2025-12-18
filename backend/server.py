@@ -269,6 +269,138 @@ async def find_franchisee_by_fsa(fsa_code: str) -> Optional[dict]:
     })
     return franchisee
 
+# ==================== HR BANK INTEGRATION ====================
+
+HRBANK_API_URL = os.environ.get('HRBANK_API_URL', '')
+HRBANK_API_KEY = os.environ.get('HRBANK_API_KEY', '')
+
+async def check_hrbank_coverage(postal_code: str) -> dict:
+    """Check if HR Bank has a franchisee serving that area"""
+    if not HRBANK_API_URL or not HRBANK_API_KEY:
+        return {"success": False, "covered": False, "error": "HR Bank not configured"}
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{HRBANK_API_URL}/api/external/bookings/check-coverage/{postal_code}",
+                headers={"X-API-Key": HRBANK_API_KEY},
+                timeout=10.0
+            )
+            return response.json()
+    except Exception as e:
+        logging.error(f"HR Bank coverage check failed: {e}")
+        return {"success": False, "covered": False, "error": str(e)}
+
+async def send_booking_to_hrbank(booking_id: str) -> dict:
+    """Send a confirmed booking to HR Bank for workforce management"""
+    if not HRBANK_API_URL or not HRBANK_API_KEY:
+        return {"success": False, "error": "HR Bank not configured"}
+    
+    try:
+        # Fetch booking with customer and property details
+        booking = await db.bookings.find_one({"_id": ObjectId(booking_id)})
+        if not booking:
+            return {"success": False, "error": "Booking not found"}
+        
+        customer = await db.users.find_one({"_id": ObjectId(booking["customerId"])})
+        property_doc = await db.properties.find_one({
+            "customerId": booking["customerId"],
+            "address": booking["address"]
+        })
+        
+        # Prepare payload for HR Bank
+        payload = {
+            "_id": str(booking["_id"]),
+            "serviceId": booking.get("serviceId"),
+            "serviceType": booking.get("serviceType"),
+            "address": booking.get("address"),
+            "postalCode": booking.get("postalCode"),
+            "squareFeet": booking.get("squareFeet"),
+            "scheduledDate": booking["scheduledDate"].isoformat() if isinstance(booking["scheduledDate"], datetime) else booking["scheduledDate"],
+            "isRecurring": booking.get("isRecurring", False),
+            "recurringFrequency": booking.get("recurringFrequency"),
+            "totalPrice": booking.get("totalPrice"),
+            "notes": booking.get("notes"),
+            "customerId": booking.get("customerId"),
+            "franchiseeId": booking.get("franchiseeId"),
+            "fsaCode": booking.get("fsaCode"),
+            "status": booking.get("status"),
+            "escrowStatus": booking.get("escrowStatus"),
+            "createdAt": booking["createdAt"].isoformat() if isinstance(booking["createdAt"], datetime) else booking["createdAt"],
+            "customer": {
+                "name": customer.get("name") if customer else None,
+                "phone": customer.get("phone") if customer else None,
+                "email": customer.get("email") if customer else None
+            },
+            "property": {
+                "apartmentNumber": property_doc.get("apartmentNumber") if property_doc else None,
+                "buzzNumber": property_doc.get("buzzNumber") if property_doc else None,
+                "notes": property_doc.get("notes") if property_doc else None
+            } if property_doc else None
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{HRBANK_API_URL}/api/external/bookings",
+                headers={
+                    "X-API-Key": HRBANK_API_KEY,
+                    "Content-Type": "application/json"
+                },
+                json=payload,
+                timeout=15.0
+            )
+            result = response.json()
+            
+            if result.get("success"):
+                # Store HR Bank task ID in Neatify
+                await db.bookings.update_one(
+                    {"_id": ObjectId(booking_id)},
+                    {"$set": {
+                        "hrbankTaskId": result.get("hrbank_task_id"),
+                        "hrbankWorkplace": result.get("routed_to_workplace")
+                    }}
+                )
+            
+            return result
+    except Exception as e:
+        logging.error(f"HR Bank send booking failed: {e}")
+        return {"success": False, "error": str(e)}
+
+async def cancel_in_hrbank(neatify_booking_id: str, reason: str = "Customer cancelled") -> dict:
+    """Cancel a booking in HR Bank"""
+    if not HRBANK_API_URL or not HRBANK_API_KEY:
+        return {"success": False, "error": "HR Bank not configured"}
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.delete(
+                f"{HRBANK_API_URL}/api/external/bookings/booking/{neatify_booking_id}",
+                params={"reason": reason},
+                headers={"X-API-Key": HRBANK_API_KEY},
+                timeout=10.0
+            )
+            return response.json()
+    except Exception as e:
+        logging.error(f"HR Bank cancel failed: {e}")
+        return {"success": False, "error": str(e)}
+
+async def get_hrbank_status(neatify_booking_id: str) -> dict:
+    """Get task status from HR Bank"""
+    if not HRBANK_API_URL or not HRBANK_API_KEY:
+        return {"success": False, "error": "HR Bank not configured"}
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{HRBANK_API_URL}/api/external/bookings/booking/{neatify_booking_id}",
+                headers={"X-API-Key": HRBANK_API_KEY},
+                timeout=10.0
+            )
+            return response.json()
+    except Exception as e:
+        logging.error(f"HR Bank status check failed: {e}")
+        return {"success": False, "error": str(e)}
+
 # ==================== ROUTES ====================
 
 @api_router.get("/")
