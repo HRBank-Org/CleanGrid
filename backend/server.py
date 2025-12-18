@@ -673,6 +673,26 @@ async def cancel_booking(booking_id: str, current_user: User = Depends(get_curre
     
     return {"message": "Booking cancelled successfully"}
 
+# HR BANK API ROUTES
+@api_router.get("/hrbank/check-coverage/{postal_code}")
+async def check_coverage(postal_code: str):
+    """Check if HR Bank has coverage for a postal code"""
+    result = await check_hrbank_coverage(postal_code)
+    return result
+
+@api_router.get("/hrbank/booking-status/{booking_id}")
+async def get_booking_hrbank_status(booking_id: str, current_user: User = Depends(get_current_user)):
+    """Get HR Bank status for a booking"""
+    booking = await db.bookings.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    if current_user.role == "customer" and booking["customerId"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    result = await get_hrbank_status(booking_id)
+    return result
+
 # REVIEW ROUTES
 @api_router.post("/reviews", response_model=Review)
 async def create_review(review: ReviewCreate, current_user: User = Depends(get_current_user)):
