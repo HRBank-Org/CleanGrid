@@ -659,6 +659,13 @@ async def cancel_booking(booking_id: str, current_user: User = Depends(get_curre
     if booking["status"] in ["completed", "cancelled"]:
         raise HTTPException(status_code=400, detail="Cannot cancel this booking")
     
+    # Cancel in HR Bank first
+    hrbank_result = await cancel_in_hrbank(booking_id, "Customer cancelled via Neatify")
+    if hrbank_result.get("success"):
+        logging.info(f"Booking {booking_id} cancelled in HR Bank")
+    else:
+        logging.warning(f"Failed to cancel in HR Bank: {hrbank_result}")
+    
     await db.bookings.update_one(
         {"_id": ObjectId(booking_id)},
         {"$set": {"status": "cancelled"}}
