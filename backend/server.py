@@ -568,8 +568,19 @@ async def create_booking(booking: BookingCreate, current_user: User = Depends(ge
     booking_dict["status"] = "assigned" if franchisee else "pending"
     booking_dict["escrowStatus"] = "held"
     booking_dict["createdAt"] = datetime.utcnow()
+    booking_dict["hrbankTaskId"] = None
+    booking_dict["hrbankWorkplace"] = None
     
     result = await db.bookings.insert_one(booking_dict)
+    booking_id = str(result.inserted_id)
+    
+    # Send booking to HR Bank for workforce management
+    hrbank_result = await send_booking_to_hrbank(booking_id)
+    if hrbank_result.get("success"):
+        logging.info(f"Booking {booking_id} sent to HR Bank: {hrbank_result}")
+    else:
+        logging.warning(f"Failed to send booking to HR Bank: {hrbank_result}")
+    
     created_booking = await db.bookings.find_one({"_id": result.inserted_id})
     created_booking["_id"] = str(created_booking["_id"])
     
