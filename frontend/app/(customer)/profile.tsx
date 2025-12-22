@@ -6,10 +6,8 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Alert,
-  Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../utils/colors';
 import { useAuthStore } from '../../stores/authStore';
@@ -17,11 +15,6 @@ import { useAuthStore } from '../../stores/authStore';
 export default function CustomerProfile() {
   const router = useRouter();
   const { user } = useAuthStore();
-
-  const handleLogout = () => {
-    // Navigate to logout screen which handles the actual logout
-    router.push('/(customer)/logout');
-  };
 
   return (
     <SafeAreaView style={styles.container}>
