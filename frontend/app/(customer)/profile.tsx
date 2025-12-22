@@ -93,33 +93,14 @@ export default function CustomerProfile() {
           </TouchableOpacity>
         </View>
 
-        {Platform.OS === 'web' ? (
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: '16px 24px',
-              marginTop: 32,
-              backgroundColor: '#FEE2E2',
-              border: 'none',
-              borderRadius: 12,
-              cursor: 'pointer',
-              width: '100%',
-            }}
-          >
-            <Ionicons name="log-out-outline" size={24} color={colors.error} />
-            <Text style={styles.logoutText}>Logout</Text>
-          </button>
-        ) : (
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={24} color={colors.error} />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        )}
+        {/* Logout - uses Link for reliable navigation */}
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={handleLogout}
+        >
+          <Ionicons name="log-out-outline" size={24} color={colors.error} />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
