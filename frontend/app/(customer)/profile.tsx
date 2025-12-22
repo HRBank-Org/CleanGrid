@@ -87,13 +87,12 @@ export default function CustomerProfile() {
         </View>
 
         {/* Logout - uses Link for reliable navigation */}
-        <TouchableOpacity 
-          style={styles.logoutButton} 
-          onPress={handleLogout}
-        >
-          <Ionicons name="log-out-outline" size={24} color={colors.error} />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <Link href="/(customer)/logout" asChild>
+          <TouchableOpacity style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color={colors.error} />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </Link>
       </ScrollView>
     </SafeAreaView>
   );
