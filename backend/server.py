@@ -819,13 +819,21 @@ async def create_property(property_data: PropertyCreate, current_user: User = De
     return Property(**created_property)
 
 @api_router.get("/properties", response_model=List[Property])
-async def get_properties(current_user: User = Depends(get_current_user)):
+async def get_properties(current_user: User = Depends(get_current_user), include_inactive: bool = False):
+    """Get all properties for the current user. By default only shows active properties."""
     if current_user.role != "customer":
         raise HTTPException(status_code=403, detail="Only customers can view properties")
     
-    properties = await db.properties.find({"customerId": current_user.id}).to_list(100)
+    query = {"customerId": current_user.id}
+    if not include_inactive:
+        query["isActive"] = {"$ne": False}  # Include docs where isActive is True or not set
+    
+    properties = await db.properties.find(query).to_list(100)
     for prop in properties:
         prop["_id"] = str(prop["_id"])
+        # Set default isActive for older properties
+        if "isActive" not in prop:
+            prop["isActive"] = True
     return [Property(**prop) for prop in properties]
 
 @api_router.get("/properties/{property_id}", response_model=Property)
