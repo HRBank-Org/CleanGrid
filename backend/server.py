@@ -102,6 +102,7 @@ class Property(PropertyCreate):
     id: str = Field(alias="_id")
     customerId: str
     fsaCode: str
+    isActive: bool = True  # Active/Inactive status
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
