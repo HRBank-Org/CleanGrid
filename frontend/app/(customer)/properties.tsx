@@ -121,9 +121,9 @@ export default function PropertiesScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>My Properties</Text>
           <Link href="/(customer)/add-property" asChild>
-            <TouchableOpacity style={styles.addButton}>
+            <Pressable style={styles.addButton} role="button">
               <Ionicons name="add" size={24} color={colors.white} />
-            </TouchableOpacity>
+            </Pressable>
           </Link>
         </View>
 
@@ -135,9 +135,9 @@ export default function PropertiesScreen() {
               Add your first property to get personalized quotes
             </Text>
             <Link href="/(customer)/add-property" asChild>
-              <TouchableOpacity style={styles.emptyButton}>
+              <Pressable style={styles.emptyButton} role="button">
                 <Text style={styles.emptyButtonText}>Add Property</Text>
-              </TouchableOpacity>
+              </Pressable>
             </Link>
           </View>
         ) : (
