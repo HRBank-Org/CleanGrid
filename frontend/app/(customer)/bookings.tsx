@@ -205,31 +205,6 @@ export default function BookingsScreen() {
           </TouchableOpacity>
         </Link>
       )}
-            </Text>
-          </button>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.cancelButton,
-              cancelling === booking._id && styles.cancelButtonDisabled,
-            ]}
-            onPress={() => handleCancelBooking(booking._id)}
-            disabled={cancelling === booking._id}
-          >
-            <Ionicons 
-              name="close-circle-outline" 
-              size={18} 
-              color={cancelling === booking._id ? colors.gray[400] : colors.error} 
-            />
-            <Text style={[
-              styles.cancelButtonText,
-              cancelling === booking._id && styles.cancelButtonTextDisabled
-            ]}>
-              {cancelling === booking._id ? 'Cancelling...' : 'Cancel Booking'}
-            </Text>
-          </TouchableOpacity>
-        )
-      )}
     </View>
   );
 
