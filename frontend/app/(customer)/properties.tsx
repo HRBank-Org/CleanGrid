@@ -415,6 +415,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     backgroundColor: colors.gray[50],
+    cursor: 'pointer' as any,
   },
   lockedButton: {
     backgroundColor: colors.gray[100],
