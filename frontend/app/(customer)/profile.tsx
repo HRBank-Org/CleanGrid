@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    cursor: 'pointer' as any,
   },
   menuInfo: {
     flex: 1,
