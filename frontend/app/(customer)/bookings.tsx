@@ -338,6 +338,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     gap: 6,
+    cursor: 'pointer' as any,
   },
   cancelButtonPressed: {
     opacity: 0.7,
