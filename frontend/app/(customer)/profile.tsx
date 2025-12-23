@@ -47,13 +47,13 @@ export default function CustomerProfile() {
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity style={styles.menuItem}>
+          <Pressable style={styles.menuItem} role="button">
             <Ionicons name="person-outline" size={24} color={colors.text} />
             <Text style={styles.menuText}>Edit Profile</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <Pressable style={styles.menuItem} role="button">
             <Ionicons name="location-outline" size={24} color={colors.text} />
             <View style={styles.menuInfo}>
               <Text style={styles.menuText}>Address</Text>
@@ -61,53 +61,51 @@ export default function CustomerProfile() {
               <Text style={styles.menuSubtext}>{user?.postalCode}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <Pressable style={styles.menuItem} role="button">
             <Ionicons name="call-outline" size={24} color={colors.text} />
             <View style={styles.menuInfo}>
               <Text style={styles.menuText}>Phone</Text>
               <Text style={styles.menuSubtext}>{user?.phone}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity style={styles.menuItem}>
+          <Pressable style={styles.menuItem} role="button">
             <Ionicons name="card-outline" size={24} color={colors.text} />
             <Text style={styles.menuText}>Payment Methods</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <Pressable style={styles.menuItem} role="button">
             <Ionicons name="notifications-outline" size={24} color={colors.text} />
             <Text style={styles.menuText}>Notifications</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity style={styles.menuItem}>
+          <Pressable style={styles.menuItem} role="button">
             <Ionicons name="help-circle-outline" size={24} color={colors.text} />
             <Text style={styles.menuText}>Help & Support</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <Pressable style={styles.menuItem} role="button">
             <Ionicons name="document-text-outline" size={24} color={colors.text} />
             <Text style={styles.menuText}>Terms & Privacy</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
-        {/* Logout - uses Link for reliable navigation */}
-        <Link href="/(customer)/logout" asChild>
-          <TouchableOpacity style={styles.logoutButton}>
-            <Ionicons name="log-out-outline" size={24} color={colors.error} />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </Link>
+        {/* Logout - now uses inline handler with Pressable */}
+        <Pressable style={styles.logoutButton} onPress={handleLogout} role="button">
+          <Ionicons name="log-out-outline" size={24} color={colors.error} />
+          <Text style={styles.logoutText}>Logout</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
