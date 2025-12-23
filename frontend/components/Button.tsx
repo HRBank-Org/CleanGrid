@@ -72,6 +72,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
+    cursor: 'pointer' as any,
   },
   primaryButton: {
     backgroundColor: colors.primary,
@@ -86,6 +87,10 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+    cursor: 'not-allowed' as any,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   buttonText: {
     fontSize: 16,
