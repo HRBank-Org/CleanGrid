@@ -117,68 +117,72 @@ export default function BookingsScreen() {
     return ['pending', 'assigned'].includes(status);
   };
 
-  const renderBookingCard = (booking: Booking) => (
-    <View key={booking._id} style={styles.bookingCard}>
-      <TouchableOpacity
-        onPress={() =>
-          router.push({
-            pathname: '/(customer)/booking-detail',
-            params: { bookingId: booking._id },
-          })
-        }
-      >
-        <View style={styles.bookingHeader}>
-          <View style={styles.statusBadge}>
-            <Ionicons
-              name={getStatusIcon(booking.status) as any}
-              size={16}
-              color={getStatusColor(booking.status)}
-            />
-            <Text
-              style={[
-                styles.statusText,
-                { color: getStatusColor(booking.status) },
-              ]}
-            >
-              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-            </Text>
-          </View>
-          {booking.isRecurring && (
-            <View style={styles.recurringBadge}>
-              <Ionicons name="repeat" size={14} color={colors.secondary} />
-              <Text style={styles.recurringText}>Recurring</Text>
-            </View>
-          )}
-        </View>
-
-        <Text style={styles.bookingAddress}>{booking.address}</Text>
-        <Text style={styles.bookingDate}>
-          {format(new Date(booking.scheduledDate), 'MMM dd, yyyy • h:mm a')}
-        </Text>
-
-        <View style={styles.bookingFooter}>
-          <Text style={styles.bookingPrice}>${booking.totalPrice.toFixed(2)}</Text>
-          <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-        </View>
-      </TouchableOpacity>
-
-      {/* Cancel button for pending/assigned bookings */}
-      {canCancel(booking.status) && (
-        <Link
-          href={{
-            pathname: '/(customer)/cancel-booking',
-            params: { bookingId: booking._id },
-          }}
-          asChild
+  const renderBookingCard = (booking: Booking) => {
+    const isCancelling = cancelling === booking._id;
+    
+    return (
+      <View key={booking._id} style={styles.bookingCard}>
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: '/(customer)/booking-detail',
+              params: { bookingId: booking._id },
+            })
+          }
+          role="button"
         >
-          <TouchableOpacity style={styles.cancelButton}>
-            <Ionicons name="close-circle-outline" size={18} color={colors.error} />
-            <Text style={styles.cancelButtonText}>Cancel Booking</Text>
-          </TouchableOpacity>
-        </Link>
-      )}
-    </View>
-  );
+          <View style={styles.bookingHeader}>
+            <View style={styles.statusBadge}>
+              <Ionicons
+                name={getStatusIcon(booking.status) as any}
+                size={16}
+                color={getStatusColor(booking.status)}
+              />
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: getStatusColor(booking.status) },
+                ]}
+              >
+                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+              </Text>
+            </View>
+            {booking.isRecurring && (
+              <View style={styles.recurringBadge}>
+                <Ionicons name="repeat" size={14} color={colors.secondary} />
+                <Text style={styles.recurringText}>Recurring</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.bookingAddress}>{booking.address}</Text>
+          <Text style={styles.bookingDate}>
+            {format(new Date(booking.scheduledDate), 'MMM dd, yyyy • h:mm a')}
+          </Text>
+
+          <View style={styles.bookingFooter}>
+            <Text style={styles.bookingPrice}>${booking.totalPrice.toFixed(2)}</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
+          </View>
+        </Pressable>
+
+        {/* Cancel button for pending/assigned bookings */}
+        {canCancel(booking.status) && (
+          <Pressable 
+            style={[styles.cancelButton, isCancelling && styles.cancelButtonDisabled]}
+            onPress={() => handleCancelBooking(booking._id)}
+            disabled={isCancelling}
+            role="button"
+          >
+            <Ionicons name="close-circle-outline" size={18} color={isCancelling ? colors.gray[400] : colors.error} />
+            <Text style={[styles.cancelButtonText, isCancelling && styles.cancelButtonTextDisabled]}>
+              {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
