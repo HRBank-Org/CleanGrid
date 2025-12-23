@@ -117,6 +117,12 @@ export default function CustomerLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="cancel-booking"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
