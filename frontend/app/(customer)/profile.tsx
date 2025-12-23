@@ -200,6 +200,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.error,
     marginTop: 8,
+    cursor: 'pointer' as any,
   },
   logoutText: {
     fontSize: 16,
