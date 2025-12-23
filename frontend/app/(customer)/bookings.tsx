@@ -31,6 +31,7 @@ export default function BookingsScreen() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   const loadBookings = async () => {
     try {
@@ -50,6 +51,34 @@ export default function BookingsScreen() {
       loadBookings();
     }, [])
   );
+
+  const handleCancelBooking = async (bookingId: string) => {
+    const confirmMsg = 'Are you sure you want to cancel this booking?';
+    let shouldCancel = false;
+    
+    if (Platform.OS === 'web') {
+      shouldCancel = window.confirm(confirmMsg);
+    }
+    
+    if (shouldCancel) {
+      try {
+        setCancelling(bookingId);
+        await api.put(`/api/bookings/${bookingId}/status`, { status: 'cancelled' });
+        // Reload bookings
+        loadBookings();
+        if (Platform.OS === 'web') {
+          window.alert('Booking cancelled successfully');
+        }
+      } catch (error: any) {
+        const errorMsg = error.response?.data?.detail || 'Failed to cancel booking';
+        if (Platform.OS === 'web') {
+          window.alert('Error: ' + errorMsg);
+        }
+      } finally {
+        setCancelling(null);
+      }
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
