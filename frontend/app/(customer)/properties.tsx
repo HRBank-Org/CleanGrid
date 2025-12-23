@@ -216,10 +216,10 @@ export default function PropertiesScreen() {
                     }}
                     asChild
                   >
-                    <TouchableOpacity style={styles.actionButton}>
+                    <Pressable style={styles.actionButton} role="button">
                       <Ionicons name="pencil" size={18} color={colors.primary} />
                       <Text style={[styles.actionText, { color: colors.primary }]}>Edit</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </Link>
 
                   {hasActiveBookings ? (
@@ -230,10 +230,11 @@ export default function PropertiesScreen() {
                       </Text>
                     </View>
                   ) : (
-                    <TouchableOpacity
+                    <Pressable
                       style={[styles.actionButton, isDeleting && styles.disabledButton]}
                       onPress={() => handleDelete(property._id, property.name)}
                       disabled={isDeleting}
+                      role="button"
                     >
                       <Ionicons 
                         name="trash-outline" 
@@ -243,7 +244,7 @@ export default function PropertiesScreen() {
                       <Text style={[styles.actionText, { color: isDeleting ? colors.gray[400] : colors.error }]}>
                         {isDeleting ? 'Deleting...' : 'Delete'}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   )}
                 </View>
               </View>
