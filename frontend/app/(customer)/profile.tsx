@@ -5,16 +5,31 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
+  Platform,
 } from 'react-native';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../utils/colors';
 import { useAuthStore } from '../../stores/authStore';
 
 export default function CustomerProfile() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = async () => {
+    const confirmMsg = 'Are you sure you want to logout?';
+    let shouldLogout = false;
+    
+    if (Platform.OS === 'web') {
+      shouldLogout = window.confirm(confirmMsg);
+    }
+    
+    if (shouldLogout) {
+      await logout();
+      router.replace('/(auth)/welcome');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
