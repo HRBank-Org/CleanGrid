@@ -41,15 +41,21 @@ export default function Welcome() {
 
         <Animated.View style={[styles.features, { opacity: fadeAnim }]}>
           <View style={styles.feature}>
-            <Ionicons name="calendar" size={24} color={colors.primary} />
+            <View style={styles.featureIcon}>
+              <Ionicons name="calendar" size={24} color={colors.primary} />
+            </View>
             <Text style={styles.featureText}>Easy Booking</Text>
           </View>
           <View style={styles.feature}>
-            <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
+            <View style={styles.featureIcon}>
+              <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
+            </View>
             <Text style={styles.featureText}>Trusted Pros</Text>
           </View>
           <View style={styles.feature}>
-            <Ionicons name="cash" size={24} color={colors.primary} />
+            <View style={styles.featureIcon}>
+              <Ionicons name="cash" size={24} color={colors.primary} />
+            </View>
             <Text style={styles.featureText}>Secure Pay</Text>
           </View>
         </Animated.View>
@@ -106,10 +112,19 @@ const styles = StyleSheet.create({
   feature: {
     alignItems: 'center',
   },
+  featureIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.teal[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   featureText: {
     fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 8,
+    color: colors.text,
+    fontWeight: '500',
     textAlign: 'center',
   },
   buttonContainer: {
