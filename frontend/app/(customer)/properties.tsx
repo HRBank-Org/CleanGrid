@@ -26,7 +26,6 @@ interface Property {
   bedrooms?: number;
   bathrooms?: number;
   squareFeet?: number;
-  isActive?: boolean;
 }
 
 interface BookingCount {
@@ -40,12 +39,12 @@ export default function PropertiesScreen() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [bookingCounts, setBookingCounts] = useState<Record<string, BookingCount>>({});
   const [loading, setLoading] = useState(true);
-  const [showInactive, setShowInactive] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const loadProperties = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/api/properties?include_inactive=${showInactive}`);
+      const response = await api.get('/api/properties');
       setProperties(response.data);
       
       // Load booking counts for each property
@@ -69,60 +68,47 @@ export default function PropertiesScreen() {
   useFocusEffect(
     useCallback(() => {
       loadProperties();
-    }, [showInactive])
+    }, [])
   );
 
-  const handleDeactivate = async (propertyId: string, propertyName: string) => {
+  const handleDelete = async (propertyId: string, propertyName: string) => {
     const count = bookingCounts[propertyId];
     
     if (count && count.activeBookings > 0) {
-      const msg = `Cannot deactivate "${propertyName}" - it has ${count.activeBookings} active booking(s). Complete or cancel them first.`;
+      const msg = `Cannot delete "${propertyName}" - it has ${count.activeBookings} active booking(s). Complete or cancel them first.`;
       if (Platform.OS === 'web') {
         window.alert(msg);
       }
       return;
     }
     
-    const confirmMsg = `Deactivate "${propertyName}"? You can reactivate it later.`;
-    let shouldDeactivate = false;
+    const confirmMsg = `Delete "${propertyName}"? This cannot be undone.`;
+    let shouldDelete = false;
     
     if (Platform.OS === 'web') {
-      shouldDeactivate = window.confirm(confirmMsg);
+      shouldDelete = window.confirm(confirmMsg);
     }
     
-    if (shouldDeactivate) {
+    if (shouldDelete) {
       try {
+        setDeleting(propertyId);
         await api.delete(`/api/properties/${propertyId}`);
+        // Remove from local state
+        setProperties(prev => prev.filter(p => p._id !== propertyId));
         if (Platform.OS === 'web') {
-          window.alert('Property deactivated');
+          window.alert('Property deleted');
         }
-        loadProperties();
       } catch (error: any) {
-        const errorMsg = error.response?.data?.detail || 'Failed to deactivate';
+        const errorMsg = error.response?.data?.detail || 'Failed to delete';
         if (Platform.OS === 'web') {
           window.alert('Error: ' + errorMsg);
         }
+        loadProperties();
+      } finally {
+        setDeleting(null);
       }
     }
   };
-
-  const handleReactivate = async (propertyId: string) => {
-    try {
-      await api.post(`/api/properties/${propertyId}/reactivate`);
-      if (Platform.OS === 'web') {
-        window.alert('Property reactivated');
-      }
-      loadProperties();
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.detail || 'Failed to reactivate';
-      if (Platform.OS === 'web') {
-        window.alert('Error: ' + errorMsg);
-      }
-    }
-  };
-
-  const activeProperties = properties.filter(p => p.isActive !== false);
-  const inactiveProperties = properties.filter(p => p.isActive === false);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -141,7 +127,7 @@ export default function PropertiesScreen() {
           </Link>
         </View>
 
-        {activeProperties.length === 0 && !loading ? (
+        {properties.length === 0 && !loading ? (
           <View style={styles.emptyState}>
             <Ionicons name="home-outline" size={64} color={colors.gray[300]} />
             <Text style={styles.emptyTitle}>No Properties Yet</Text>
@@ -155,162 +141,114 @@ export default function PropertiesScreen() {
             </Link>
           </View>
         ) : (
-          <>
-            {/* Active Properties */}
-            {activeProperties.map((property) => {
-              const count = bookingCounts[property._id];
-              const hasActiveBookings = count && count.activeBookings > 0;
-              
-              return (
-                <View key={property._id} style={styles.propertyCard}>
-                  <View style={styles.propertyHeader}>
-                    <View style={styles.propertyIcon}>
-                      <Ionicons
-                        name={property.propertyType === 'residential' ? 'home' : 'business'}
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.propertyInfo}>
-                      <Text style={styles.propertyName}>{property.name}</Text>
-                      <Text style={styles.propertyAddress}>
-                        {property.address}
-                        {property.apartmentNumber ? `, Unit ${property.apartmentNumber}` : ''}
-                      </Text>
-                      {property.buzzNumber && (
-                        <Text style={styles.propertyBuzz}>Buzz: {property.buzzNumber}</Text>
-                      )}
-                      <Text style={styles.propertyPostal}>{property.postalCode}</Text>
-                    </View>
+          properties.map((property) => {
+            const count = bookingCounts[property._id];
+            const hasActiveBookings = count && count.activeBookings > 0;
+            const isDeleting = deleting === property._id;
+            
+            return (
+              <View key={property._id} style={styles.propertyCard}>
+                <View style={styles.propertyHeader}>
+                  <View style={styles.propertyIcon}>
+                    <Ionicons
+                      name={property.propertyType === 'residential' ? 'home' : 'business'}
+                      size={24}
+                      color={colors.primary}
+                    />
                   </View>
-
-                  {/* Booking Status Badge */}
-                  {count && (
-                    <View style={styles.bookingStatus}>
-                      {hasActiveBookings ? (
-                        <View style={styles.activeBookingBadge}>
-                          <Ionicons name="calendar" size={14} color={colors.primary} />
-                          <Text style={styles.activeBookingText}>
-                            {count.activeBookings} active booking{count.activeBookings > 1 ? 's' : ''}
-                          </Text>
-                        </View>
-                      ) : (
-                        <View style={styles.noBookingBadge}>
-                          <Text style={styles.noBookingText}>No active bookings</Text>
-                        </View>
-                      )}
-                      {count.completedBookings > 0 && (
-                        <Text style={styles.completedText}>
-                          {count.completedBookings} completed
-                        </Text>
-                      )}
-                    </View>
-                  )}
-
-                  <View style={styles.propertyDetails}>
-                    {property.propertyType === 'residential' ? (
-                      <>
-                        <View style={styles.detailItem}>
-                          <Ionicons name="bed-outline" size={16} color={colors.textSecondary} />
-                          <Text style={styles.detailText}>{property.bedrooms || 0} Beds</Text>
-                        </View>
-                        <View style={styles.detailItem}>
-                          <Ionicons name="water" size={16} color={colors.textSecondary} />
-                          <Text style={styles.detailText}>{property.bathrooms || 0} Baths</Text>
-                        </View>
-                      </>
-                    ) : (
-                      <View style={styles.detailItem}>
-                        <Ionicons name="resize-outline" size={16} color={colors.textSecondary} />
-                        <Text style={styles.detailText}>{property.squareFeet || 0} sq ft</Text>
-                      </View>
+                  <View style={styles.propertyInfo}>
+                    <Text style={styles.propertyName}>{property.name}</Text>
+                    <Text style={styles.propertyAddress}>
+                      {property.address}
+                      {property.apartmentNumber ? `, Unit ${property.apartmentNumber}` : ''}
+                    </Text>
+                    {property.buzzNumber && (
+                      <Text style={styles.propertyBuzz}>Buzz: {property.buzzNumber}</Text>
                     )}
-                  </View>
-
-                  <View style={styles.propertyActions}>
-                    <Link
-                      href={{
-                        pathname: '/(customer)/edit-property',
-                        params: { propertyId: property._id },
-                      }}
-                      asChild
-                    >
-                      <TouchableOpacity style={styles.actionButton}>
-                        <Ionicons name="pencil" size={18} color={colors.primary} />
-                        <Text style={[styles.actionText, { color: colors.primary }]}>Edit</Text>
-                      </TouchableOpacity>
-                    </Link>
-
-                    {hasActiveBookings ? (
-                      <View style={[styles.actionButton, styles.lockedButton]}>
-                        <Ionicons name="lock-closed" size={18} color={colors.gray[400]} />
-                        <Text style={[styles.actionText, { color: colors.gray[400] }]}>Locked</Text>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={() => handleDeactivate(property._id, property.name)}
-                      >
-                        <Ionicons name="eye-off-outline" size={18} color={colors.warning} />
-                        <Text style={[styles.actionText, { color: colors.warning }]}>Deactivate</Text>
-                      </TouchableOpacity>
-                    )}
+                    <Text style={styles.propertyPostal}>{property.postalCode}</Text>
                   </View>
                 </View>
-              );
-            })}
 
-            {/* Show Inactive Toggle */}
-            <TouchableOpacity
-              style={styles.toggleInactive}
-              onPress={() => setShowInactive(!showInactive)}
-            >
-              <Ionicons
-                name={showInactive ? 'chevron-up' : 'chevron-down'}
-                size={20}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.toggleInactiveText}>
-                {showInactive ? 'Hide' : 'Show'} inactive properties
-                {inactiveProperties.length > 0 && ` (${inactiveProperties.length})`}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Inactive Properties */}
-            {showInactive && inactiveProperties.length > 0 && (
-              <View style={styles.inactiveSection}>
-                <Text style={styles.inactiveSectionTitle}>Inactive Properties</Text>
-                {inactiveProperties.map((property) => (
-                  <View key={property._id} style={[styles.propertyCard, styles.inactiveCard]}>
-                    <View style={styles.propertyHeader}>
-                      <View style={[styles.propertyIcon, styles.inactiveIcon]}>
-                        <Ionicons
-                          name={property.propertyType === 'residential' ? 'home' : 'business'}
-                          size={24}
-                          color={colors.gray[400]}
-                        />
+                {/* Booking Status */}
+                {count && (
+                  <View style={styles.bookingStatus}>
+                    {hasActiveBookings ? (
+                      <View style={styles.activeBookingBadge}>
+                        <Ionicons name="calendar" size={14} color={colors.primary} />
+                        <Text style={styles.activeBookingText}>
+                          {count.activeBookings} active booking{count.activeBookings > 1 ? 's' : ''}
+                        </Text>
                       </View>
-                      <View style={styles.propertyInfo}>
-                        <Text style={[styles.propertyName, styles.inactiveText]}>{property.name}</Text>
-                        <Text style={styles.propertyAddress}>{property.address}</Text>
-                        <View style={styles.inactiveBadge}>
-                          <Text style={styles.inactiveBadgeText}>Inactive</Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.reactivateButton}
-                      onPress={() => handleReactivate(property._id)}
-                    >
-                      <Ionicons name="refresh" size={18} color={colors.success} />
-                      <Text style={styles.reactivateText}>Reactivate</Text>
-                    </TouchableOpacity>
+                    ) : null}
+                    {count.completedBookings > 0 && (
+                      <Text style={styles.completedText}>
+                        {count.completedBookings} completed
+                      </Text>
+                    )}
                   </View>
-                ))}
+                )}
+
+                <View style={styles.propertyDetails}>
+                  {property.propertyType === 'residential' ? (
+                    <>
+                      <View style={styles.detailItem}>
+                        <Ionicons name="bed-outline" size={16} color={colors.textSecondary} />
+                        <Text style={styles.detailText}>{property.bedrooms || 0} Beds</Text>
+                      </View>
+                      <View style={styles.detailItem}>
+                        <Ionicons name="water" size={16} color={colors.textSecondary} />
+                        <Text style={styles.detailText}>{property.bathrooms || 0} Baths</Text>
+                      </View>
+                    </>
+                  ) : (
+                    <View style={styles.detailItem}>
+                      <Ionicons name="resize-outline" size={16} color={colors.textSecondary} />
+                      <Text style={styles.detailText}>{property.squareFeet || 0} sq ft</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.propertyActions}>
+                  <Link
+                    href={{
+                      pathname: '/(customer)/edit-property',
+                      params: { propertyId: property._id },
+                    }}
+                    asChild
+                  >
+                    <TouchableOpacity style={styles.actionButton}>
+                      <Ionicons name="pencil" size={18} color={colors.primary} />
+                      <Text style={[styles.actionText, { color: colors.primary }]}>Edit</Text>
+                    </TouchableOpacity>
+                  </Link>
+
+                  {hasActiveBookings ? (
+                    <View style={[styles.actionButton, styles.lockedButton]}>
+                      <Ionicons name="lock-closed" size={18} color={colors.gray[400]} />
+                      <Text style={[styles.actionText, { color: colors.gray[400] }]}>
+                        Has bookings
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.actionButton, isDeleting && styles.disabledButton]}
+                      onPress={() => handleDelete(property._id, property.name)}
+                      disabled={isDeleting}
+                    >
+                      <Ionicons 
+                        name="trash-outline" 
+                        size={18} 
+                        color={isDeleting ? colors.gray[400] : colors.error} 
+                      />
+                      <Text style={[styles.actionText, { color: isDeleting ? colors.gray[400] : colors.error }]}>
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
-            )}
-          </>
+            );
+          })
         )}
       </ScrollView>
     </SafeAreaView>
@@ -383,10 +321,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  inactiveCard: {
-    opacity: 0.7,
-    backgroundColor: colors.gray[50],
-  },
   propertyHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -396,13 +330,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.teal[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
-  },
-  inactiveIcon: {
-    backgroundColor: colors.gray[200],
   },
   propertyInfo: {
     flex: 1,
@@ -413,9 +344,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 4,
   },
-  inactiveText: {
-    color: colors.gray[500],
-  },
   propertyAddress: {
     fontSize: 14,
     color: colors.textSecondary,
@@ -423,7 +351,7 @@ const styles = StyleSheet.create({
   },
   propertyBuzz: {
     fontSize: 13,
-    color: colors.secondary,
+    color: colors.primary,
     marginBottom: 2,
   },
   propertyPostal: {
@@ -436,14 +364,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   activeBookingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.teal[50],
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -454,19 +379,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '500',
   },
-  noBookingBadge: {
-    backgroundColor: colors.gray[100],
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  noBookingText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
   completedText: {
     fontSize: 12,
-    color: colors.success,
+    color: colors.textSecondary,
   },
   propertyDetails: {
     flexDirection: 'row',
@@ -502,56 +417,11 @@ const styles = StyleSheet.create({
   lockedButton: {
     backgroundColor: colors.gray[100],
   },
+  disabledButton: {
+    opacity: 0.5,
+  },
   actionText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  toggleInactive: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  toggleInactiveText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  inactiveSection: {
-    marginTop: 8,
-  },
-  inactiveSectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 12,
-  },
-  inactiveBadge: {
-    backgroundColor: colors.gray[200],
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-  },
-  inactiveBadgeText: {
-    fontSize: 11,
-    color: colors.gray[600],
-    fontWeight: '500',
-  },
-  reactivateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  reactivateText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.success,
   },
 });
