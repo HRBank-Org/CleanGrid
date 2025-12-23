@@ -284,6 +284,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    cursor: 'pointer' as any,
   },
   emptyState: {
     alignItems: 'center',
