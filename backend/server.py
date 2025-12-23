@@ -876,8 +876,8 @@ async def update_property(
     return Property(**updated_property)
 
 @api_router.delete("/properties/{property_id}")
-async def deactivate_property(property_id: str, current_user: User = Depends(get_current_user)):
-    """Deactivate a property (soft delete) - only if no active bookings"""
+async def delete_property(property_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a property - only if no active bookings"""
     property_doc = await db.properties.find_one({"_id": ObjectId(property_id)})
     if not property_doc:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -895,31 +895,12 @@ async def deactivate_property(property_id: str, current_user: User = Depends(get
     if active_bookings > 0:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot deactivate property with {active_bookings} active booking(s). Complete or cancel them first."
+            detail=f"Cannot delete property with {active_bookings} active booking(s). Complete or cancel them first."
         )
     
-    # Soft delete - mark as inactive
-    await db.properties.update_one(
-        {"_id": ObjectId(property_id)},
-        {"$set": {"isActive": False}}
-    )
-    return {"message": "Property deactivated successfully"}
-
-@api_router.post("/properties/{property_id}/reactivate")
-async def reactivate_property(property_id: str, current_user: User = Depends(get_current_user)):
-    """Reactivate a previously deactivated property"""
-    property_doc = await db.properties.find_one({"_id": ObjectId(property_id)})
-    if not property_doc:
-        raise HTTPException(status_code=404, detail="Property not found")
-    
-    if property_doc["customerId"] != current_user.id:
-        raise HTTPException(status_code=403, detail="Access denied")
-    
-    await db.properties.update_one(
-        {"_id": ObjectId(property_id)},
-        {"$set": {"isActive": True}}
-    )
-    return {"message": "Property reactivated successfully"}
+    # Hard delete
+    await db.properties.delete_one({"_id": ObjectId(property_id)})
+    return {"message": "Property deleted successfully"}
 
 @api_router.get("/properties/{property_id}/bookings-count")
 async def get_property_bookings_count(property_id: str, current_user: User = Depends(get_current_user)):
