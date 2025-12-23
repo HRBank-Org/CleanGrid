@@ -32,7 +32,6 @@ export default function BookingsScreen() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cancelling, setCancelling] = useState<string | null>(null);
 
   const loadBookings = async () => {
     try {
@@ -52,61 +51,6 @@ export default function BookingsScreen() {
       loadBookings();
     }, [])
   );
-
-  const handleCancelBooking = async (bookingId: string) => {
-    console.log('Cancel booking initiated for:', bookingId);
-    
-    // Confirmation first
-    let shouldCancel = false;
-    if (Platform.OS === 'web') {
-      shouldCancel = window.confirm('Are you sure you want to cancel this booking?');
-    } else {
-      shouldCancel = await new Promise<boolean>((resolve) => {
-        Alert.alert(
-          'Cancel Booking',
-          'Are you sure you want to cancel this booking?',
-          [
-            { text: 'No', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Yes, Cancel', style: 'destructive', onPress: () => resolve(true) },
-          ]
-        );
-      });
-    }
-
-    if (!shouldCancel) {
-      console.log('Cancel aborted by user');
-      return;
-    }
-
-    try {
-      setCancelling(bookingId);
-      console.log('Making DELETE request to:', `/api/bookings/${bookingId}`);
-      
-      const response = await api.delete(`/api/bookings/${bookingId}`);
-      console.log('Cancel response:', response.status);
-      
-      // Update local state immediately
-      setBookings(prev => prev.map(b => 
-        b._id === bookingId ? { ...b, status: 'cancelled' } : b
-      ));
-      
-      if (Platform.OS === 'web') {
-        window.alert('Booking cancelled successfully!');
-      } else {
-        Alert.alert('Cancelled', 'Booking cancelled successfully');
-      }
-    } catch (error: any) {
-      console.error('Cancel error:', error);
-      const errorMsg = error.response?.data?.detail || 'Failed to cancel booking';
-      if (Platform.OS === 'web') {
-        window.alert('Error: ' + errorMsg);
-      } else {
-        Alert.alert('Error', errorMsg);
-      }
-    } finally {
-      setCancelling(null);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
