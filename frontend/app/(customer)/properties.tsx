@@ -5,7 +5,7 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   RefreshControl,
   Platform,
 } from 'react-native';
