@@ -192,42 +192,19 @@ export default function BookingsScreen() {
 
       {/* Cancel button for pending/assigned bookings */}
       {canCancel(booking.status) && (
-        Platform.OS === 'web' ? (
-          <button
-            onClick={() => {
-              console.log('Web cancel clicked:', booking._id);
-              handleCancelBooking(booking._id);
-            }}
-            disabled={cancelling === booking._id}
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              padding: '12px',
-              marginTop: 12,
-              borderTop: `1px solid ${colors.border}`,
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderTopWidth: 1,
-              borderTopColor: colors.border,
-              borderTopStyle: 'solid',
-              width: '100%',
-              cursor: cancelling === booking._id ? 'not-allowed' : 'pointer',
-              opacity: cancelling === booking._id ? 0.5 : 1,
-            }}
-          >
-            <Ionicons 
-              name="close-circle-outline" 
-              size={18} 
-              color={cancelling === booking._id ? colors.gray[400] : colors.error} 
-            />
-            <Text style={[
-              styles.cancelButtonText,
-              cancelling === booking._id && styles.cancelButtonTextDisabled
-            ]}>
-              {cancelling === booking._id ? 'Cancelling...' : 'Cancel Booking'}
+        <Link
+          href={{
+            pathname: '/(customer)/cancel-booking',
+            params: { bookingId: booking._id },
+          }}
+          asChild
+        >
+          <TouchableOpacity style={styles.cancelButton}>
+            <Ionicons name="close-circle-outline" size={18} color={colors.error} />
+            <Text style={styles.cancelButtonText}>Cancel Booking</Text>
+          </TouchableOpacity>
+        </Link>
+      )}
             </Text>
           </button>
         ) : (
