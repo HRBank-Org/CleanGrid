@@ -1,39 +1,81 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated, Image, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
 import { colors } from '../utils/colors';
 
+const { width, height } = Dimensions.get('window');
+
 export default function Index() {
   const router = useRouter();
-  const { user, isLoading } = useAuthStore();
+  const { loadAuth } = useAuthStore();
+  
+  const logoScale = useRef(new Animated.Value(0.3)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        // Route based on role
-        if (user.role === 'customer') {
-          router.replace('/(customer)/home');
-        } else if (user.role === 'franchisee') {
-          router.replace('/(franchisee)/dashboard');
-        } else if (user.role === 'admin') {
+    // Start splash animation
+    Animated.parallel([
+      Animated.spring(logoScale, {
+        toValue: 1,
+        tension: 10,
+        friction: 3,
+        useNativeDriver: true,
+      }),
+      Animated.timing(logoOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Load auth and navigate after delay
+    const timer = setTimeout(async () => {
+      await loadAuth();
+      navigateToNextScreen();
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const navigateToNextScreen = () => {
+    const currentUser = useAuthStore.getState().user;
+    if (currentUser) {
+      switch (currentUser.role) {
+        case 'admin':
           router.replace('/(admin)/dashboard');
-        }
-      } else {
-        router.replace('/(auth)/welcome');
+          break;
+        case 'franchisee':
+          router.replace('/(franchisee)/dashboard');
+          break;
+        case 'workforce':
+          router.replace('/(workforce)/dashboard');
+          break;
+        default:
+          router.replace('/(customer)/home');
       }
+    } else {
+      router.replace('/(auth)/welcome');
     }
-  }, [user, isLoading]);
+  };
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../assets/images/neatify-logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={styles.text}>Loading Neatify...</Text>
+      <Animated.View
+        style={[
+          styles.logoContainer,
+          {
+            opacity: logoOpacity,
+            transform: [{ scale: logoScale }],
+          },
+        ]}
+      >
+        <Image
+          source={require('../assets/images/neatify-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -41,18 +83,16 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#1a2744',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 24,
-  },
-  text: {
-    marginTop: 16,
-    fontSize: 16,
-    color: colors.textSecondary,
+    width: width * 0.65,
+    height: height * 0.25,
   },
 });
