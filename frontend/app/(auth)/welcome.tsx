@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Image, Animated, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../../components/Button';
@@ -71,6 +71,17 @@ export default function Welcome() {
             variant="outline"
             style={{ marginTop: 12 }}
           />
+          
+          {/* Franchisee Application Link */}
+          <Pressable 
+            style={styles.franchiseeLink}
+            onPress={() => router.push('/(public)/apply')}
+            role="button"
+          >
+            <Ionicons name="business-outline" size={18} color={colors.primary} />
+            <Text style={styles.franchiseeLinkText}>Become a Franchisee</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </Pressable>
         </Animated.View>
       </View>
     </SafeAreaView>
