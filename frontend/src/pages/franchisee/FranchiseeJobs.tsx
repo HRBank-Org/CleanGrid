@@ -29,7 +29,7 @@ export default function FranchiseeJobs() {
   const fetchJobs = async () => {
     try {
       const params = filter !== 'all' ? `?status_filter=${filter}` : ''
-      const response = await api.get(`/api/franchisee/jobs${params}`)
+      const response = await api.get(`/franchisee/jobs${params}`)
       setJobs(response.data.data.jobs || [])
     } catch (err) {
       console.error('Failed to fetch jobs:', err)
@@ -41,7 +41,7 @@ export default function FranchiseeJobs() {
   const handleAccept = async (jobId: string) => {
     setActionLoading(jobId)
     try {
-      await api.post(`/api/franchisee/jobs/${jobId}/accept`)
+      await api.post(`/franchisee/jobs/${jobId}/accept`)
       fetchJobs()
     } catch (err) {
       console.error('Failed to accept job:', err)
@@ -53,7 +53,7 @@ export default function FranchiseeJobs() {
   const handleDecline = async (jobId: string) => {
     setActionLoading(jobId)
     try {
-      await api.post(`/api/franchisee/jobs/${jobId}/decline`)
+      await api.post(`/franchisee/jobs/${jobId}/decline`)
       fetchJobs()
     } catch (err) {
       console.error('Failed to decline job:', err)

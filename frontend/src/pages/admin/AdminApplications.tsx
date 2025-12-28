@@ -30,7 +30,7 @@ export default function AdminApplications() {
 
   const fetchApplications = async () => {
     try {
-      const response = await api.get(`/api/admin/applications?status=${filter}`)
+      const response = await api.get(`/admin/applications?status=${filter}`)
       setApplications(response.data.data.applications || [])
     } catch (err) {
       console.error('Failed to fetch applications:', err)
@@ -42,7 +42,7 @@ export default function AdminApplications() {
   const handleApprove = async (id: string) => {
     setActionLoading(true)
     try {
-      await api.post(`/api/admin/applications/${id}/approve`)
+      await api.post(`/admin/applications/${id}/approve`)
       fetchApplications()
       setSelectedApp(null)
     } catch (err) {
@@ -55,7 +55,7 @@ export default function AdminApplications() {
   const handleReject = async (id: string) => {
     setActionLoading(true)
     try {
-      await api.post(`/api/admin/applications/${id}/reject`)
+      await api.post(`/admin/applications/${id}/reject`)
       fetchApplications()
       setSelectedApp(null)
     } catch (err) {

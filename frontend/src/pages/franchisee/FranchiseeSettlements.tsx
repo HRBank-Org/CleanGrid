@@ -25,7 +25,7 @@ export default function FranchiseeSettlements() {
 
   const fetchSettlements = async () => {
     try {
-      const response = await api.get('/api/franchisee/settlements')
+      const response = await api.get('/franchisee/settlements')
       setSettlements(response.data.data.settlements || [])
     } catch (err) {
       console.error('Failed to fetch settlements:', err)
