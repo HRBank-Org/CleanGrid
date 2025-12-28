@@ -171,20 +171,22 @@ async def get_application_status(application_id: str, request: Request):
 # ==================== AUTHENTICATED FRANCHISEE ENDPOINTS ====================
 
 @router.get("/dashboard", response_model=Dict)
-async def get_dashboard(request: Request, current_user: dict = None):
+async def get_dashboard(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
     Get franchisee dashboard with KPIs and territory info.
     Requires authenticated franchisee_owner.
     """
     db = request.app.state.db
     
-    # For now, get user from request state (will be set by auth middleware)
-    user = getattr(request.state, 'current_user', None) or current_user
-    if not user:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    # Get user from token
+    user = await get_current_user_from_token(credentials, db)
     
-    # Get franchisee
-    franchisee = await db.franchisees.find_one({"ownerId": user.get("_id") or user.get("id")})
+    # Get franchisee - try by ownerId first, then by email
+    franchisee = await db.franchisees.find_one({"ownerId": str(user["_id"])})
+    if not franchisee:
+        # Try to find by email (for users who applied before account linking)
+        franchisee = await db.franchisees.find_one({"email": user.get("email")})
+    
     if not franchisee:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
