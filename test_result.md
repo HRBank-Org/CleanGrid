@@ -101,3 +101,48 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the franchisee application endpoint at POST /api/franchisee/apply with new businessNumber and taxNumber fields"
+
+backend:
+  - task: "Franchisee Application Endpoint with New Fields"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/franchisee.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED: POST /api/franchisee/apply endpoint working correctly. Successfully accepts and saves businessNumber (123456789RC0001) and taxNumber (RT0001) fields. Returns 200 status with success:true and application_id. GET /api/franchisee/application/{id} retrieval also working. Duplicate email validation working (returns 400). Required field validation working (returns 400). All test cases passed."
+
+frontend:
+  - task: "Frontend Integration (Not Tested)"
+    implemented: false
+    working: "NA"
+    file: "N/A"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Frontend testing not performed as per system limitations - only backend testing conducted"
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Franchisee Application Endpoint with New Fields"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "testing"
+      message: "✅ Backend testing completed successfully. The POST /api/franchisee/apply endpoint is working correctly with the new businessNumber and taxNumber fields. All validations are functioning properly. The endpoint accepts the test data, saves it to MongoDB, and returns the expected response format. No issues found."
