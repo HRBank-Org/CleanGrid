@@ -1,59 +1,65 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
+import { X, Save, Users, MapPin, TrendingUp } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
+
+// Import FSA data by province
+import ONTARIO_FSAS from '../data/fsaOntario'
+import BC_FSAS from '../data/fsaBC'
+import QUEBEC_FSAS from '../data/fsaQuebec'
+import ALBERTA_FSAS from '../data/fsaAlberta'
 
 // Province centers and zoom levels
 const PROVINCE_CONFIG: Record<string, { center: [number, number]; zoom: number; name: string }> = {
-  ALL: { center: [56.1304, -106.3468], zoom: 4, name: 'All Canada' },
-  ON: { center: [44.0, -79.5], zoom: 6, name: 'Ontario' },
-  BC: { center: [53.7, -125.0], zoom: 5, name: 'British Columbia' },
-  QC: { center: [46.8, -71.2], zoom: 6, name: 'Quebec' },
+  ON: { center: [43.7, -79.4], zoom: 7, name: 'Ontario' },
+  BC: { center: [49.2, -123.1], zoom: 6, name: 'British Columbia' },
+  QC: { center: [45.5, -73.6], zoom: 7, name: 'Quebec' },
   AB: { center: [53.5, -114.0], zoom: 6, name: 'Alberta' },
 }
 
-// Sample FSA data with coordinates (real implementation would fetch from backend)
-const FSA_DATA: Array<{
-  fsa: string
-  province: string
-  city: string
-  lat: number
-  lng: number
-  status: 'protected' | 'probation' | 'overflow' | 'unassigned' | 'inactive'
-  franchisee?: string
-  kpiScore?: number
-}> = [
+// Sample franchisee assignments (in production, this would come from the backend)
+const SAMPLE_ASSIGNMENTS: Record<string, { 
+  franchiseeId: string
+  franchiseeName: string
+  status: 'protected' | 'probation' | 'overflow'
+  kpiScore: number 
+}> = {
   // Ontario
-  { fsa: 'M5V', province: 'ON', city: 'Toronto', lat: 43.6426, lng: -79.3871, status: 'protected', franchisee: 'Clean Stars Toronto', kpiScore: 95 },
-  { fsa: 'M5W', province: 'ON', city: 'Toronto', lat: 43.6450, lng: -79.3800, status: 'protected', franchisee: 'Clean Stars Toronto', kpiScore: 95 },
-  { fsa: 'M4Y', province: 'ON', city: 'Toronto', lat: 43.6680, lng: -79.3832, status: 'unassigned' },
-  { fsa: 'M5G', province: 'ON', city: 'Toronto', lat: 43.6570, lng: -79.3840, status: 'probation', franchisee: 'Downtown Cleaners', kpiScore: 72 },
-  { fsa: 'M5H', province: 'ON', city: 'Toronto', lat: 43.6510, lng: -79.3790, status: 'unassigned' },
-  { fsa: 'L5B', province: 'ON', city: 'Mississauga', lat: 43.5890, lng: -79.6441, status: 'protected', franchisee: 'Peel Pro Clean', kpiScore: 88 },
-  { fsa: 'L5M', province: 'ON', city: 'Mississauga', lat: 43.5650, lng: -79.7200, status: 'unassigned' },
-  { fsa: 'K1A', province: 'ON', city: 'Ottawa', lat: 45.4215, lng: -75.6972, status: 'protected', franchisee: 'Capital Cleaners', kpiScore: 91 },
-  { fsa: 'K2P', province: 'ON', city: 'Ottawa', lat: 45.4100, lng: -75.6900, status: 'unassigned' },
-  { fsa: 'N2L', province: 'ON', city: 'Waterloo', lat: 43.4643, lng: -80.5204, status: 'overflow', franchisee: 'KW Cleaning Co', kpiScore: 85 },
-  // British Columbia
-  { fsa: 'V6B', province: 'BC', city: 'Vancouver', lat: 49.2827, lng: -123.1207, status: 'protected', franchisee: 'West Coast Cleaners', kpiScore: 92 },
-  { fsa: 'V6E', province: 'BC', city: 'Vancouver', lat: 49.2850, lng: -123.1300, status: 'probation', franchisee: 'West Coast Cleaners', kpiScore: 78 },
-  { fsa: 'V6G', province: 'BC', city: 'Vancouver', lat: 49.2900, lng: -123.1350, status: 'unassigned' },
-  { fsa: 'V5K', province: 'BC', city: 'Vancouver', lat: 49.2800, lng: -123.0400, status: 'unassigned' },
-  { fsa: 'V8W', province: 'BC', city: 'Victoria', lat: 48.4284, lng: -123.3656, status: 'protected', franchisee: 'Island Clean', kpiScore: 89 },
-  { fsa: 'V8V', province: 'BC', city: 'Victoria', lat: 48.4200, lng: -123.3700, status: 'unassigned' },
+  'M5V': { franchiseeId: '1', franchiseeName: 'Clean Stars Toronto', status: 'protected', kpiScore: 95 },
+  'M5W': { franchiseeId: '1', franchiseeName: 'Clean Stars Toronto', status: 'protected', kpiScore: 95 },
+  'M5G': { franchiseeId: '2', franchiseeName: 'Downtown Cleaners', status: 'probation', kpiScore: 72 },
+  'L5B': { franchiseeId: '3', franchiseeName: 'Peel Pro Clean', status: 'protected', kpiScore: 88 },
+  'K1A': { franchiseeId: '4', franchiseeName: 'Capital Cleaners', status: 'protected', kpiScore: 91 },
+  'N2L': { franchiseeId: '5', franchiseeName: 'KW Cleaning Co', status: 'overflow', kpiScore: 85 },
+  // BC
+  'V6B': { franchiseeId: '6', franchiseeName: 'West Coast Cleaners', status: 'protected', kpiScore: 92 },
+  'V6E': { franchiseeId: '6', franchiseeName: 'West Coast Cleaners', status: 'probation', kpiScore: 78 },
+  'V8W': { franchiseeId: '7', franchiseeName: 'Island Clean', status: 'protected', kpiScore: 89 },
   // Quebec
-  { fsa: 'H3A', province: 'QC', city: 'Montreal', lat: 45.5017, lng: -73.5673, status: 'protected', franchisee: 'Montreal Pro Nettoyage', kpiScore: 94 },
-  { fsa: 'H3B', province: 'QC', city: 'Montreal', lat: 45.5050, lng: -73.5700, status: 'protected', franchisee: 'Montreal Pro Nettoyage', kpiScore: 94 },
-  { fsa: 'H2Y', province: 'QC', city: 'Montreal', lat: 45.5088, lng: -73.5540, status: 'unassigned' },
-  { fsa: 'H4A', province: 'QC', city: 'Montreal', lat: 45.4700, lng: -73.6100, status: 'inactive' },
-  { fsa: 'G1R', province: 'QC', city: 'Quebec City', lat: 46.8139, lng: -71.2080, status: 'protected', franchisee: 'Quebec Propre', kpiScore: 87 },
-  { fsa: 'G1K', province: 'QC', city: 'Quebec City', lat: 46.8200, lng: -71.2200, status: 'unassigned' },
+  'H3A': { franchiseeId: '8', franchiseeName: 'Montreal Pro Nettoyage', status: 'protected', kpiScore: 94 },
+  'H3B': { franchiseeId: '8', franchiseeName: 'Montreal Pro Nettoyage', status: 'protected', kpiScore: 94 },
+  'G1R': { franchiseeId: '9', franchiseeName: 'Québec Propre', status: 'protected', kpiScore: 87 },
   // Alberta
-  { fsa: 'T2P', province: 'AB', city: 'Calgary', lat: 51.0447, lng: -114.0719, status: 'protected', franchisee: 'Calgary Clean Team', kpiScore: 90 },
-  { fsa: 'T2G', province: 'AB', city: 'Calgary', lat: 51.0400, lng: -114.0500, status: 'probation', franchisee: 'Calgary Clean Team', kpiScore: 75 },
-  { fsa: 'T2R', province: 'AB', city: 'Calgary', lat: 51.0350, lng: -114.0800, status: 'unassigned' },
-  { fsa: 'T5J', province: 'AB', city: 'Edmonton', lat: 53.5461, lng: -113.4938, status: 'protected', franchisee: 'Edmonton Shine', kpiScore: 93 },
-  { fsa: 'T5K', province: 'AB', city: 'Edmonton', lat: 53.5500, lng: -113.5100, status: 'unassigned' },
-  { fsa: 'T6E', province: 'AB', city: 'Edmonton', lat: 53.5200, lng: -113.4800, status: 'overflow', franchisee: 'South Edmonton Clean', kpiScore: 82 },
+  'T2P': { franchiseeId: '10', franchiseeName: 'Calgary Clean Team', status: 'protected', kpiScore: 90 },
+  'T2G': { franchiseeId: '10', franchiseeName: 'Calgary Clean Team', status: 'probation', kpiScore: 75 },
+  'T5J': { franchiseeId: '11', franchiseeName: 'Edmonton Shine', status: 'protected', kpiScore: 93 },
+  'T6E': { franchiseeId: '12', franchiseeName: 'South Edmonton Clean', status: 'overflow', kpiScore: 82 },
+}
+
+// Sample franchisees list
+const FRANCHISEES = [
+  { id: '1', name: 'Clean Stars Toronto' },
+  { id: '2', name: 'Downtown Cleaners' },
+  { id: '3', name: 'Peel Pro Clean' },
+  { id: '4', name: 'Capital Cleaners' },
+  { id: '5', name: 'KW Cleaning Co' },
+  { id: '6', name: 'West Coast Cleaners' },
+  { id: '7', name: 'Island Clean' },
+  { id: '8', name: 'Montreal Pro Nettoyage' },
+  { id: '9', name: 'Québec Propre' },
+  { id: '10', name: 'Calgary Clean Team' },
+  { id: '11', name: 'Edmonton Shine' },
+  { id: '12', name: 'South Edmonton Clean' },
 ]
 
 // Status color mapping
@@ -73,6 +79,18 @@ const STATUS_LABELS: Record<string, string> = {
   inactive: 'Inactive',
 }
 
+interface FSAData {
+  fsa: string
+  city: string
+  lat: number
+  lng: number
+  province: string
+  status: 'protected' | 'probation' | 'overflow' | 'unassigned' | 'inactive'
+  franchiseeId?: string
+  franchiseeName?: string
+  kpiScore?: number
+}
+
 // Component to handle map view changes
 function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
   const map = useMap()
@@ -85,30 +103,76 @@ interface TerritoryMapProps {
 }
 
 export default function TerritoryMap({ onSelectFSA }: TerritoryMapProps) {
-  const [selectedProvince, setSelectedProvince] = useState('ALL')
+  const [selectedProvince, setSelectedProvince] = useState<string>('ON')
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [selectedFSA, setSelectedFSA] = useState<FSAData | null>(null)
+  const [editMode, setEditMode] = useState(false)
+  const [editData, setEditData] = useState({
+    franchiseeId: '',
+    status: 'unassigned' as string,
+  })
 
-  const filteredFSAs = useMemo(() => {
-    return FSA_DATA.filter(fsa => {
-      if (selectedProvince !== 'ALL' && fsa.province !== selectedProvince) return false
-      if (statusFilter && fsa.status !== statusFilter) return false
-      return true
-    })
-  }, [selectedProvince, statusFilter])
-
-  const stats = useMemo(() => {
-    const data = selectedProvince === 'ALL' ? FSA_DATA : FSA_DATA.filter(f => f.province === selectedProvince)
-    return {
-      total: data.length,
-      protected: data.filter(f => f.status === 'protected').length,
-      probation: data.filter(f => f.status === 'probation').length,
-      overflow: data.filter(f => f.status === 'overflow').length,
-      unassigned: data.filter(f => f.status === 'unassigned').length,
-      inactive: data.filter(f => f.status === 'inactive').length,
+  // Get FSAs for selected province with assignments
+  const provinceFSAs = useMemo(() => {
+    let baseFSAs: Array<{ fsa: string; city: string; lat: number; lng: number }> = []
+    
+    switch (selectedProvince) {
+      case 'ON': baseFSAs = ONTARIO_FSAS; break
+      case 'BC': baseFSAs = BC_FSAS; break
+      case 'QC': baseFSAs = QUEBEC_FSAS; break
+      case 'AB': baseFSAs = ALBERTA_FSAS; break
     }
+
+    return baseFSAs.map(fsa => {
+      const assignment = SAMPLE_ASSIGNMENTS[fsa.fsa]
+      return {
+        ...fsa,
+        province: selectedProvince,
+        status: assignment?.status || 'unassigned',
+        franchiseeId: assignment?.franchiseeId,
+        franchiseeName: assignment?.franchiseeName,
+        kpiScore: assignment?.kpiScore,
+      } as FSAData
+    })
   }, [selectedProvince])
 
+  // Filter FSAs by status
+  const filteredFSAs = useMemo(() => {
+    if (!statusFilter) return provinceFSAs
+    return provinceFSAs.filter(fsa => fsa.status === statusFilter)
+  }, [provinceFSAs, statusFilter])
+
+  // Calculate stats
+  const stats = useMemo(() => {
+    return {
+      total: provinceFSAs.length,
+      protected: provinceFSAs.filter(f => f.status === 'protected').length,
+      probation: provinceFSAs.filter(f => f.status === 'probation').length,
+      overflow: provinceFSAs.filter(f => f.status === 'overflow').length,
+      unassigned: provinceFSAs.filter(f => f.status === 'unassigned').length,
+      inactive: provinceFSAs.filter(f => f.status === 'inactive').length,
+    }
+  }, [provinceFSAs])
+
   const config = PROVINCE_CONFIG[selectedProvince]
+
+  const handleFSAClick = (fsa: FSAData) => {
+    setSelectedFSA(fsa)
+    setEditData({
+      franchiseeId: fsa.franchiseeId || '',
+      status: fsa.status,
+    })
+    setEditMode(false)
+    onSelectFSA?.(fsa.fsa)
+  }
+
+  const handleSave = () => {
+    // In production, this would call the API
+    console.log('Saving FSA:', selectedFSA?.fsa, editData)
+    alert(`FSA ${selectedFSA?.fsa} updated!\n\nFranchisee: ${FRANCHISEES.find(f => f.id === editData.franchiseeId)?.name || 'Unassigned'}\nStatus: ${editData.status}`)
+    setSelectedFSA(null)
+    setEditMode(false)
+  }
 
   return (
     <div className="space-y-4">
@@ -117,7 +181,10 @@ export default function TerritoryMap({ onSelectFSA }: TerritoryMapProps) {
         {/* Province Selector */}
         <select
           value={selectedProvince}
-          onChange={(e) => setSelectedProvince(e.target.value)}
+          onChange={(e) => {
+            setSelectedProvince(e.target.value)
+            setSelectedFSA(null)
+          }}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white"
         >
           {Object.entries(PROVINCE_CONFIG).map(([code, { name }]) => (
@@ -140,32 +207,26 @@ export default function TerritoryMap({ onSelectFSA }: TerritoryMapProps) {
 
       {/* Stats Bar */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-        <div className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs font-medium">
+        <div className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs font-medium whitespace-nowrap">
           <span className="text-gray-600">Total:</span>
           <span className="font-bold">{stats.total}</span>
         </div>
-        <div className="flex items-center gap-1 px-3 py-1 bg-green-100 rounded-full text-xs font-medium text-green-700">
+        <div className="flex items-center gap-1 px-3 py-1 bg-green-100 rounded-full text-xs font-medium text-green-700 whitespace-nowrap">
           <span className="w-2 h-2 rounded-full bg-green-500"></span>
           <span>{stats.protected}</span>
         </div>
-        <div className="flex items-center gap-1 px-3 py-1 bg-yellow-100 rounded-full text-xs font-medium text-yellow-700">
+        <div className="flex items-center gap-1 px-3 py-1 bg-yellow-100 rounded-full text-xs font-medium text-yellow-700 whitespace-nowrap">
           <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
           <span>{stats.probation}</span>
         </div>
-        <div className="flex items-center gap-1 px-3 py-1 bg-orange-100 rounded-full text-xs font-medium text-orange-700">
+        <div className="flex items-center gap-1 px-3 py-1 bg-orange-100 rounded-full text-xs font-medium text-orange-700 whitespace-nowrap">
           <span className="w-2 h-2 rounded-full bg-orange-500"></span>
           <span>{stats.overflow}</span>
         </div>
-        <div className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded-full text-xs font-medium text-gray-600">
+        <div className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded-full text-xs font-medium text-gray-600 whitespace-nowrap">
           <span className="w-2 h-2 rounded-full bg-gray-400"></span>
           <span>{stats.unassigned}</span>
         </div>
-        {stats.inactive > 0 && (
-          <div className="flex items-center gap-1 px-3 py-1 bg-red-100 rounded-full text-xs font-medium text-red-700">
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-            <span>{stats.inactive}</span>
-          </div>
-        )}
       </div>
 
       {/* Map Container */}
@@ -185,20 +246,20 @@ export default function TerritoryMap({ onSelectFSA }: TerritoryMapProps) {
             <CircleMarker
               key={fsa.fsa}
               center={[fsa.lat, fsa.lng]}
-              radius={selectedProvince === 'ALL' ? 6 : 10}
+              radius={8}
               fillColor={STATUS_COLORS[fsa.status]}
               color="#fff"
               weight={2}
               opacity={1}
               fillOpacity={0.8}
               eventHandlers={{
-                click: () => onSelectFSA?.(fsa.fsa)
+                click: () => handleFSAClick(fsa)
               }}
             >
               <Popup>
                 <div className="min-w-[150px]">
                   <div className="font-bold text-lg text-primary">{fsa.fsa}</div>
-                  <div className="text-gray-600">{fsa.city}, {fsa.province}</div>
+                  <div className="text-gray-600">{fsa.city}</div>
                   <div className="mt-2 flex items-center gap-2">
                     <span
                       className="w-3 h-3 rounded-full"
@@ -206,15 +267,21 @@ export default function TerritoryMap({ onSelectFSA }: TerritoryMapProps) {
                     ></span>
                     <span className="font-medium">{STATUS_LABELS[fsa.status]}</span>
                   </div>
-                  {fsa.franchisee && (
+                  {fsa.franchiseeName && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                       <div className="text-sm text-gray-500">Franchisee</div>
-                      <div className="font-medium">{fsa.franchisee}</div>
+                      <div className="font-medium">{fsa.franchiseeName}</div>
                       {fsa.kpiScore && (
                         <div className="text-sm text-gray-500">KPI: <span className="font-bold text-primary">{fsa.kpiScore}</span></div>
                       )}
                     </div>
                   )}
+                  <button 
+                    className="mt-2 w-full py-1 bg-primary text-white text-sm rounded font-medium"
+                    onClick={() => handleFSAClick(fsa)}
+                  >
+                    Edit
+                  </button>
                 </div>
               </Popup>
             </CircleMarker>
@@ -234,6 +301,129 @@ export default function TerritoryMap({ onSelectFSA }: TerritoryMapProps) {
           </div>
         ))}
       </div>
+
+      {/* FSA Detail/Edit Modal */}
+      {selectedFSA && (
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[1000]" onClick={() => setSelectedFSA(null)}>
+          <div 
+            className="bg-white rounded-t-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-primary">{selectedFSA.fsa}</h2>
+                  <p className="text-gray-500">{selectedFSA.city}, {selectedFSA.province}</p>
+                </div>
+                <button onClick={() => setSelectedFSA(null)} className="p-2 text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Current Status */}
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: STATUS_COLORS[selectedFSA.status] }}
+                ></span>
+                <span className="font-semibold">{STATUS_LABELS[selectedFSA.status]}</span>
+              </div>
+
+              {/* Current Assignment */}
+              {selectedFSA.franchiseeName && !editMode && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 text-gray-500 mb-2">
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm">Assigned Franchisee</span>
+                  </div>
+                  <p className="font-semibold text-secondary-900">{selectedFSA.franchiseeName}</p>
+                  {selectedFSA.kpiScore && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      <span className="text-sm text-gray-600">KPI Score: <span className="font-bold text-primary">{selectedFSA.kpiScore}</span></span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!selectedFSA.franchiseeName && !editMode && (
+                <div className="bg-gray-50 rounded-xl p-4 text-center text-gray-500">
+                  <MapPin className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p>This FSA is not assigned to any franchisee</p>
+                </div>
+              )}
+
+              {/* Edit Form */}
+              {editMode && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Assign to Franchisee
+                    </label>
+                    <select
+                      value={editData.franchiseeId}
+                      onChange={(e) => setEditData({ ...editData, franchiseeId: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl"
+                    >
+                      <option value="">-- Unassigned --</option>
+                      {FRANCHISEES.map(f => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Protection Status
+                    </label>
+                    <select
+                      value={editData.status}
+                      onChange={(e) => setEditData({ ...editData, status: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl"
+                      disabled={!editData.franchiseeId}
+                    >
+                      <option value="unassigned">Unassigned</option>
+                      <option value="protected">Protected</option>
+                      <option value="probation">Probation</option>
+                      <option value="overflow">Overflow</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4 border-t border-gray-100">
+                {!editMode ? (
+                  <button
+                    onClick={() => setEditMode(true)}
+                    className="flex-1 py-3 bg-primary text-white rounded-xl font-medium"
+                  >
+                    Edit Assignment
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setEditMode(false)}
+                      className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      className="flex-1 py-3 bg-primary text-white rounded-xl font-medium flex items-center justify-center gap-2"
+                    >
+                      <Save className="w-5 h-5" />
+                      Save
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
