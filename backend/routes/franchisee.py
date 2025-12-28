@@ -440,14 +440,14 @@ async def get_settlements(request: Request, credentials: HTTPAuthorizationCreden
 
 
 @router.get("/compliance", response_model=Dict)
-async def get_compliance_documents(request: Request):
+async def get_compliance_documents(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get compliance document status"""
     db = request.app.state.db
-    user = getattr(request.state, 'current_user', None)
-    if not user:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    user = await get_current_user_from_token(credentials, db)
     
-    franchisee = await db.franchisees.find_one({"ownerId": user.get("_id") or user.get("id")})
+    franchisee = await db.franchisees.find_one({"ownerId": str(user["_id"])})
+    if not franchisee:
+        franchisee = await db.franchisees.find_one({"email": user.get("email")})
     if not franchisee:
         raise HTTPException(status_code=404, detail="Franchisee not found")
     
