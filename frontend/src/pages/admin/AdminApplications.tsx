@@ -3,18 +3,19 @@ import { User, MapPin, Calendar, ChevronRight, CheckCircle, XCircle, Clock, Eye 
 import api from '../../services/api'
 
 interface Application {
-  _id: string
-  operatingName: string
-  legalName: string
-  legalType: string
-  contactName: string
+  id: string
+  operating_name: string
+  legal_name: string
+  legal_type?: string
+  contact_name: string
   email: string
   phone: string
   city: string
   province: string
-  preferredFSAs: string[]
+  preferred_fsas: string[]
+  vehicle_access: boolean
   status: string
-  applicationSubmittedAt: string
+  submitted_at: string
 }
 
 export default function AdminApplications() {
@@ -23,17 +24,21 @@ export default function AdminApplications() {
   const [filter, setFilter] = useState('submitted')
   const [selectedApp, setSelectedApp] = useState<Application | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchApplications()
   }, [filter])
 
   const fetchApplications = async () => {
+    setLoading(true)
+    setError(null)
     try {
       const response = await api.get(`/admin/applications?status=${filter}`)
       setApplications(response.data.data.applications || [])
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch applications:', err)
+      setError(err.response?.data?.detail || 'Failed to load applications')
     } finally {
       setLoading(false)
     }
@@ -41,25 +46,34 @@ export default function AdminApplications() {
 
   const handleApprove = async (id: string) => {
     setActionLoading(true)
+    setError(null)
     try {
-      await api.post(`/admin/applications/${id}/approve`)
+      await api.patch(`/admin/applications/${id}/approve`, {})
+      alert('Application approved successfully!')
       fetchApplications()
       setSelectedApp(null)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to approve:', err)
+      setError(err.response?.data?.detail || 'Failed to approve application')
     } finally {
       setActionLoading(false)
     }
   }
 
   const handleReject = async (id: string) => {
+    const reason = prompt('Please enter rejection reason:')
+    if (!reason) return
+    
     setActionLoading(true)
+    setError(null)
     try {
-      await api.post(`/admin/applications/${id}/reject`)
+      await api.patch(`/admin/applications/${id}/reject`, { reason })
+      alert('Application rejected')
       fetchApplications()
       setSelectedApp(null)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to reject:', err)
+      setError(err.response?.data?.detail || 'Failed to reject application')
     } finally {
       setActionLoading(false)
     }
