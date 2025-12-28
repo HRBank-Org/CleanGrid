@@ -45,7 +45,7 @@ export default function FranchiseeDashboard() {
 
   const fetchDashboard = async () => {
     try {
-      const response = await api.get('/api/franchisee/dashboard')
+      const response = await api.get('/franchisee/dashboard')
       setData(response.data.data)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load dashboard')
