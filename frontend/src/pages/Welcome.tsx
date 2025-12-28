@@ -1,9 +1,18 @@
 import { Link } from 'react-router-dom'
 import { Calendar, ShieldCheck, CreditCard, Building2, ChevronRight } from 'lucide-react'
+import LanguageToggle from '../components/LanguageToggle'
+import { useLanguageStore } from '../stores/languageStore'
 
 export default function Welcome() {
+  const { t } = useLanguageStore()
+  
   return (
     <div className="min-h-screen flex flex-col px-6 py-12 safe-top">
+      {/* Language Toggle */}
+      <div className="absolute top-4 right-4">
+        <LanguageToggle />
+      </div>
+      
       {/* Logo & Tagline */}
       <div className="flex-1 flex flex-col items-center justify-center">
         <img 
@@ -12,7 +21,7 @@ export default function Welcome() {
           className="h-40 mb-6"
         />
         <p className="text-gray-500 text-center max-w-xs">
-          Book trusted cleaning services for your home or business across Canada
+          {t('welcome.tagline')}
         </p>
         
         {/* Features */}
@@ -21,19 +30,19 @@ export default function Welcome() {
             <div className="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mb-2">
               <Calendar className="w-6 h-6 text-primary" />
             </div>
-            <span className="text-xs font-medium text-gray-600">Easy Booking</span>
+            <span className="text-xs font-medium text-gray-600">{t('welcome.easyBooking')}</span>
           </div>
           <div className="flex flex-col items-center">
             <div className="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mb-2">
               <ShieldCheck className="w-6 h-6 text-primary" />
             </div>
-            <span className="text-xs font-medium text-gray-600">Trusted Pros</span>
+            <span className="text-xs font-medium text-gray-600">{t('welcome.trustedPros')}</span>
           </div>
           <div className="flex flex-col items-center">
             <div className="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mb-2">
               <CreditCard className="w-6 h-6 text-primary" />
             </div>
-            <span className="text-xs font-medium text-gray-600">Secure Pay</span>
+            <span className="text-xs font-medium text-gray-600">{t('welcome.securePay')}</span>
           </div>
         </div>
       </div>
@@ -44,13 +53,13 @@ export default function Welcome() {
           to="/signup"
           className="block w-full py-4 bg-primary text-white text-center font-semibold rounded-xl shadow-lg shadow-primary/30 active:scale-[0.98] transition-transform"
         >
-          Get Started
+          {t('welcome.getStarted')}
         </Link>
         <Link
           to="/login"
           className="block w-full py-4 bg-white text-primary text-center font-semibold rounded-xl border-2 border-primary active:scale-[0.98] transition-transform"
         >
-          Sign In
+          {t('welcome.signIn')}
         </Link>
         
         {/* Franchisee Link */}
@@ -59,7 +68,7 @@ export default function Welcome() {
           className="flex items-center justify-center gap-2 py-4 text-primary"
         >
           <Building2 className="w-5 h-5" />
-          <span className="font-medium">Become a Franchisee</span>
+          <span className="font-medium">{t('welcome.becomeAFranchisee')}</span>
           <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
