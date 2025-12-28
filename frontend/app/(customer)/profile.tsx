@@ -19,13 +19,17 @@ export default function CustomerProfile() {
 
   const handleLogout = async () => {
     const confirmMsg = 'Are you sure you want to logout?';
-    let shouldLogout = false;
     
     if (Platform.OS === 'web') {
-      shouldLogout = window.confirm(confirmMsg);
-    }
-    
-    if (shouldLogout) {
+      // Use window.confirm for web
+      const shouldLogout = window.confirm(confirmMsg);
+      if (shouldLogout) {
+        await logout();
+        router.replace('/(auth)/welcome');
+      }
+    } else {
+      // For native, use Alert (would need to import Alert)
+      // For now, just logout directly on native
       await logout();
       router.replace('/(auth)/welcome');
     }
