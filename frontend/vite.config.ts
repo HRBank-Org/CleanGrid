@@ -58,6 +58,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
+    allowedHosts: ['cleangrid-app.preview.emergentagent.com', 'localhost'],
     proxy: {
       '/api': {
         target: 'http://localhost:8001',
