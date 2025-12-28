@@ -15,16 +15,19 @@ interface AuthState {
   user: User | null
   token: string | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
-  signup: (data: any) => Promise<void>
+  error: string | null
+  login: (email: string, password: string) => Promise<boolean>
+  signup: (data: any) => Promise<boolean>
   logout: () => void
   loadUser: () => void
+  clearError: () => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: localStorage.getItem('token'),
   isLoading: true,
+  error: null,
   
   loadUser: () => {
     const token = localStorage.getItem('token')
@@ -42,19 +45,35 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   
   login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password })
-    const { access_token, user } = response.data
-    localStorage.setItem('token', access_token)
-    localStorage.setItem('user', JSON.stringify(user))
-    set({ user, token: access_token })
+    set({ isLoading: true, error: null })
+    try {
+      const response = await api.post('/api/auth/login', { email, password })
+      const { access_token, user } = response.data
+      localStorage.setItem('token', access_token)
+      localStorage.setItem('user', JSON.stringify(user))
+      set({ user, token: access_token, isLoading: false })
+      return true
+    } catch (err: any) {
+      const message = err.response?.data?.detail || 'Login failed'
+      set({ error: message, isLoading: false })
+      return false
+    }
   },
   
   signup: async (data: any) => {
-    const response = await api.post('/auth/signup', data)
-    const { access_token, user } = response.data
-    localStorage.setItem('token', access_token)
-    localStorage.setItem('user', JSON.stringify(user))
-    set({ user, token: access_token })
+    set({ isLoading: true, error: null })
+    try {
+      const response = await api.post('/api/auth/signup', data)
+      const { access_token, user } = response.data
+      localStorage.setItem('token', access_token)
+      localStorage.setItem('user', JSON.stringify(user))
+      set({ user, token: access_token, isLoading: false })
+      return true
+    } catch (err: any) {
+      const message = err.response?.data?.detail || 'Signup failed'
+      set({ error: message, isLoading: false })
+      return false
+    }
   },
   
   logout: () => {
@@ -62,6 +81,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('user')
     set({ user: null, token: null })
   },
+  
+  clearError: () => set({ error: null }),
 }))
 
 // Initialize on load
