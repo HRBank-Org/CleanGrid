@@ -50,6 +50,7 @@ async def submit_application(application_data: dict, request: Request):
         "legalType": application_data["legalType"],
         "operatingName": application_data["operatingName"],
         "businessNumber": application_data.get("businessNumber"),
+        "taxNumber": application_data.get("taxNumber"),
         
         # Contact
         "contactName": application_data["contactName"],

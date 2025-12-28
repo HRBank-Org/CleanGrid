@@ -158,7 +158,8 @@ class FranchiseeApplication(BaseModel):
     legalName: str
     legalType: str  # "individual", "corporation"
     operatingName: str
-    businessNumber: Optional[str] = None
+    businessNumber: Optional[str] = None  # Business Number (BN)
+    taxNumber: Optional[str] = None  # GST/HST Number
     
     # Contact
     contactName: str
@@ -184,7 +185,8 @@ class Franchisee(BaseModel):
     operatingName: str
     legalName: str
     legalType: str
-    businessNumber: Optional[str] = None
+    businessNumber: Optional[str] = None  # Business Number (BN)
+    taxNumber: Optional[str] = None  # GST/HST Number
     
     # Contact
     address: str
