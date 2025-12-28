@@ -1,0 +1,98 @@
+{
+  "welcome": {
+    "tagline": "Réservez des services de nettoyage de confiance pour votre maison ou entreprise partout au Canada",
+    "easyBooking": "Réservation Facile",
+    "trustedPros": "Pros de Confiance",
+    "securePay": "Paiement Sécurisé",
+    "getStarted": "Commencer",
+    "signIn": "Se Connecter",
+    "becomeAFranchisee": "Devenir Franchisé"
+  },
+  "login": {
+    "title": "Bon Retour",
+    "subtitle": "Connectez-vous à votre compte",
+    "email": "Courriel",
+    "password": "Mot de passe",
+    "signIn": "Se Connecter",
+    "noAccount": "Vous n'avez pas de compte?",
+    "signUp": "S'inscrire",
+    "forgotPassword": "Mot de passe oublié?"
+  },
+  "signup": {
+    "title": "Créer un Compte",
+    "subtitle": "Rejoignez CleanGrid aujourd'hui",
+    "name": "Nom Complet",
+    "email": "Courriel",
+    "phone": "Numéro de Téléphone",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le Mot de passe",
+    "createAccount": "Créer un Compte",
+    "haveAccount": "Vous avez déjà un compte?",
+    "signIn": "Se Connecter"
+  },
+  "home": {
+    "greeting": "Bonjour",
+    "findService": "Trouvez le service de nettoyage parfait",
+    "popularServices": "Services Populaires",
+    "deepClean": "Nettoyage en Profondeur",
+    "regularClean": "Nettoyage Régulier",
+    "moveInOut": "Déménagement",
+    "commercial": "Commercial",
+    "viewAll": "Voir Tout",
+    "bookNow": "Réserver"
+  },
+  "profile": {
+    "title": "Profil",
+    "myBookings": "Mes Réservations",
+    "savedAddresses": "Adresses Enregistrées",
+    "paymentMethods": "Modes de Paiement",
+    "notifications": "Notifications",
+    "help": "Aide et Support",
+    "logout": "Déconnexion",
+    "deleteAccount": "Supprimer le Compte"
+  },
+  "franchisee": {
+    "apply": {
+      "title": "Devenir Franchisé",
+      "subtitle": "Rejoignez le réseau CleanGrid",
+      "step1": "Info Entreprise",
+      "step2": "Coordonnées",
+      "step3": "Préférences",
+      "step4": "Ententes",
+      "legalName": "Raison Sociale",
+      "legalType": "Type d'Entreprise",
+      "individual": "Particulier/Travailleur Autonome",
+      "corporation": "Société",
+      "operatingName": "Nom Commercial",
+      "businessNumber": "Numéro d'Entreprise (NE)",
+      "taxNumber": "Numéro de TPS/TVH",
+      "contactName": "Nom du Contact",
+      "email": "Adresse Courriel",
+      "phone": "Numéro de Téléphone",
+      "address": "Adresse",
+      "city": "Ville",
+      "province": "Province",
+      "postalCode": "Code Postal",
+      "preferredFSAs": "Zones de Service Préférées (RTA)",
+      "vehicleAccess": "J'ai accès à un véhicule",
+      "experience": "Expérience Pertinente",
+      "agreesToHRBank": "J'accepte d'utiliser HR Bank pour la gestion du personnel",
+      "agreesToInsurance": "J'accepte de maintenir les minimums d'assurance requis",
+      "next": "Suivant",
+      "back": "Retour",
+      "submit": "Soumettre la Demande",
+      "submitting": "Soumission en cours..."
+    }
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non"
+  }
+}

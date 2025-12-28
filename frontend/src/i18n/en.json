@@ -1,0 +1,98 @@
+{
+  "welcome": {
+    "tagline": "Book trusted cleaning services for your home or business across Canada",
+    "easyBooking": "Easy Booking",
+    "trustedPros": "Trusted Pros",
+    "securePay": "Secure Pay",
+    "getStarted": "Get Started",
+    "signIn": "Sign In",
+    "becomeAFranchisee": "Become a Franchisee"
+  },
+  "login": {
+    "title": "Welcome Back",
+    "subtitle": "Sign in to your account",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign Up",
+    "forgotPassword": "Forgot Password?"
+  },
+  "signup": {
+    "title": "Create Account",
+    "subtitle": "Join CleanGrid today",
+    "name": "Full Name",
+    "email": "Email",
+    "phone": "Phone Number",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "createAccount": "Create Account",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign In"
+  },
+  "home": {
+    "greeting": "Hello",
+    "findService": "Find the perfect cleaning service",
+    "popularServices": "Popular Services",
+    "deepClean": "Deep Clean",
+    "regularClean": "Regular Clean",
+    "moveInOut": "Move In/Out",
+    "commercial": "Commercial",
+    "viewAll": "View All",
+    "bookNow": "Book Now"
+  },
+  "profile": {
+    "title": "Profile",
+    "myBookings": "My Bookings",
+    "savedAddresses": "Saved Addresses",
+    "paymentMethods": "Payment Methods",
+    "notifications": "Notifications",
+    "help": "Help & Support",
+    "logout": "Logout",
+    "deleteAccount": "Delete Account"
+  },
+  "franchisee": {
+    "apply": {
+      "title": "Become a Franchisee",
+      "subtitle": "Join the CleanGrid network",
+      "step1": "Business Info",
+      "step2": "Contact Details",
+      "step3": "Preferences",
+      "step4": "Agreements",
+      "legalName": "Legal Business Name",
+      "legalType": "Business Type",
+      "individual": "Individual/Sole Proprietor",
+      "corporation": "Corporation",
+      "operatingName": "Operating Name (DBA)",
+      "businessNumber": "Business Number (BN)",
+      "taxNumber": "GST/HST Number",
+      "contactName": "Contact Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "address": "Street Address",
+      "city": "City",
+      "province": "Province",
+      "postalCode": "Postal Code",
+      "preferredFSAs": "Preferred Service Areas (FSAs)",
+      "vehicleAccess": "I have access to a vehicle",
+      "experience": "Relevant Experience",
+      "agreesToHRBank": "I agree to use HR Bank for workforce management",
+      "agreesToInsurance": "I agree to maintain required insurance minimums",
+      "next": "Next",
+      "back": "Back",
+      "submit": "Submit Application",
+      "submitting": "Submitting..."
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  }
+}
