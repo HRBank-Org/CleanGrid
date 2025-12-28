@@ -282,6 +282,11 @@ async def get_dashboard(request: Request, credentials: HTTPAuthorizationCredenti
             "franchisee": {
                 "id": str(franchisee["_id"]),
                 "operating_name": franchisee.get("operatingName"),
+                "legal_name": franchisee.get("legalName"),
+                "contact_name": franchisee.get("contactName"),
+                "email": franchisee.get("email"),
+                "city": franchisee.get("city"),
+                "province": franchisee.get("province"),
                 "status": franchisee.get("status")
             },
             "kpis": {
@@ -290,11 +295,7 @@ async def get_dashboard(request: Request, credentials: HTTPAuthorizationCredenti
                 "completion_rate": franchisee.get("completionRate", 100),
                 "avg_rating": franchisee.get("avgRating", 5.0)
             },
-            "territories": [{
-                "fsa_code": t.get("fsaCode"),
-                "city": t.get("city"),
-                "protection_status": t.get("protectionStatus")
-            } for t in territories],
+            "territories": territories_data,
             "stats": {
                 "jobs_this_week": jobs_this_week,
                 "pending_jobs": pending_jobs,
