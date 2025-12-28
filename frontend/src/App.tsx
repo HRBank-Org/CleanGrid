@@ -4,6 +4,8 @@ import { useAuthStore } from './stores/authStore'
 // Layouts
 import PublicLayout from './layouts/PublicLayout'
 import CustomerLayout from './layouts/CustomerLayout'
+import FranchiseeLayout from './layouts/FranchiseeLayout'
+import AdminLayout from './layouts/AdminLayout'
 
 // Public Pages
 import Welcome from './pages/Welcome'
@@ -17,6 +19,20 @@ import Home from './pages/customer/Home'
 import Bookings from './pages/customer/Bookings'
 import Properties from './pages/customer/Properties'
 import Profile from './pages/customer/Profile'
+
+// Franchisee Pages
+import FranchiseeLogin from './pages/franchisee/FranchiseeLogin'
+import FranchiseeDashboard from './pages/franchisee/FranchiseeDashboard'
+import FranchiseeJobs from './pages/franchisee/FranchiseeJobs'
+import FranchiseeSettlements from './pages/franchisee/FranchiseeSettlements'
+import FranchiseeProfile from './pages/franchisee/FranchiseeProfile'
+
+// Admin Pages
+import AdminLogin from './pages/admin/AdminLogin'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminApplications from './pages/admin/AdminApplications'
+import AdminTerritories from './pages/admin/AdminTerritories'
+import AdminProfile from './pages/admin/AdminProfile'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isLoading } = useAuthStore()
