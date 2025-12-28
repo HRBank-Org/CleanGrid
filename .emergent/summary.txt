@@ -1,158 +1,178 @@
 <analysis>
 
-**original_problem_statement**: The initial request is to build a full-stack mobile application named Neatify. It's a cleaning services booking app for both commercial and residential clients in Canada. Key features include routing jobs to franchisees based on Forward Sortation Areas (FSAs), an escrow payment system (to be implemented later with Stripe), and multiple user roles (Customer, Franchisee, Admin).
+**original_problem_statement**: The initial goal was to build CleanGrid, a full-stack Expo mobile app for booking cleaning services. The project was plagued by a critical, recurring bug on the web platform where authenticated actions (delete, cancel, logout) failed. After a partial fix, the user, frustrated with ongoing platform-specific issues, made a decisive pivot.
 
-**PRODUCT REQUIREMENTS**:
-- **Core Functionality**: Book residential and commercial cleaning services.
-- **User Roles**: Customer, Franchisee, Admin, and a newly added Workforce role.
-- **Quoting**: An advanced, real-time quote calculator based on a Clean Units (CU) system.
-- **Property Management**: Customers can save and manage multiple properties.
-- **Job Management**: Jobs are composed of trackable tasks.
-- **Workforce Management**: A 'Workforce' user type to perform jobs.
-- **Booking Visualization**: A calendar view for customers to see their bookings.
-- **Future Features**: FSA-based job routing and Stripe integration for escrow payments.
+The new and current goal is to build CleanGrid as a **Progressive Web App (PWA)**, completely removing the Expo/React Native codebase. The PWA should be mobile-first and installable on iOS/Android from the browser.
+
+The user provided a comprehensive Product Requirements Document (PRD) which outlines the full vision:
+- **Core Business Model**: CleanGrid is a software platform connecting customers with franchisees. Franchisees are independent operators who manage their own workforce using a third-party HR Bank system.
+- **PWA-First Strategy**: Avoid App Store/Play Store delays.
+- **User Roles**: Customer, Franchisee Owner, Franchisee Staff, Admin, Support.
+- **Territory Model**: Franchisees are assigned protected territories based on Forward Sortation Areas (FSAs), but protection is conditional on performance KPIs.
+- **Franchisee Onboarding**: A public, multi-step application flow is required. Franchisees cannot accept jobs until compliance checks (insurance, Stripe onboarding, HR Bank linkage) are complete.
+- **HR Bank Integration**: Confirmed bookings in CleanGrid are pushed as Work Orders to the franchisee's HR Bank account via webhooks. Status updates are received back from HR Bank via inbound webhooks.
+- **Payments & Settlements**: CleanGrid facilitates payments via Stripe, collecting the full amount from customers and remitting net payouts to franchisees after deducting fees.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack Expo (React Native) and FastAPI application. The backend includes data models and API endpoints for Users (all roles), Services, Bookings, Properties, and Tasks. The frontend features a tab-based navigation system tailored to different user roles. Customers can register, log in, browse services, manage their properties (add/view), and use a sophisticated real-time quote calculator. The system is populated with seed data for testing, and a custom logo has been integrated. The foundations for Admin, Franchisee, and Workforce dashboards are in place but require further development.
+The project has been successfully and completely migrated from an Expo/React Native application to a **React + Vite PWA with a Tailwind CSS**. The previous Expo codebase has been deleted.
+
+- **Frontend**: A brand new, mobile-first PWA built with React, Vite, , and Zustand for state management. It includes a functional and styled Welcome page, Login/Signup flow, a Customer Home page that displays services, a Profile page with working Logout, and a multi-step Franchisee Application form.
+- **Backend**: The FastAPI backend has been significantly refactored into a modular architecture. It now has separate route files for , , , and , and a comprehensive  file defining the data models based on the user's PRD. New endpoints for franchisee application, admin review, and webhook handling have been created and tested.
 
 **Last working item**:
-    - **Last item agent was working**: Implementing a user request to add  and  fields to the Property Management feature. The agent updated the backend  model in  and the frontend Add Property form (). The agent was about to update the Edit Property form but has not yet started that part.
-    - **Status**: IN PROGRESS
+    - **Last item agent was working**: The user provided the official CleanGrid logo and requested to replace the placeholder/mock logo on the Welcome page.
+    - **Status**: NOT STARTED
     - **Agent Testing Done**: N
-    - **Which testing method agent to use?**: both. The backend API needs to be tested with  after restarting the service. The frontend needs testing using the frontend testing agent to verify the full CRUD (Create, Read, Update, Delete) flow for properties, ensuring the new fields are handled correctly in both the Add and Edit forms and are displayed in the property list.
+    - **Which testing method agent to use?**: Frontend testing agent. Use the screenshot tool to verify the new logo is correctly displayed on the  page.
     - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-  - **Issue 1**: Complete the addition of  and  to Property Management. (Priority: P0)
-    - **Attempted fixes**: The agent has updated the backend model and the Add Property screen. This is an incomplete fix.
+  - **Issue 1**:  Implement business number and provincial sales tax fields in the franchisee application. (Priority: P0)
+    - **Description**: The user requested that the franchisee application form collect a  (BN) and  for both Individual and Corporate entities, as these are required for business operations in Canada. The backend and database must also be updated to store this information.
+    - **Attempted fixes**: The agent successfully updated the frontend form in  to include the new input fields. The next step was to update the backend.
     - **Next debug checklist**:
-        1.  In , add state and  components for  and .
-        2.  Update the  function in  to include the new fields in the  request.
-        3.  In , update the component that renders each property to display the new  and  fields if they exist.
-        4.  Restart the backend service (backend: ERROR (not running)
-backend: ERROR (abnormal termination)) to apply the schema changes made in .
-        5.  Test the full property lifecycle: add a new property with the new fields, see it displayed correctly, edit it, and confirm the changes persist.
-    - **Why fix this issue and what will be achieved with the fix?**: This will complete the user's request from message #197 and make the Property Management feature more useful for deliveries and access to apartment buildings.
+        1. Modify the  and  Pydantic models in  to include  and  fields.
+        2. Update the  endpoint in  to accept and save these new fields to the database.
+        3. Restart the backend service.
+        4. Perform a full frontend test of the application form to ensure the data is submitted and saved correctly.
+    - **Why fix this issue and what will be achieved with the fix?**: This is a critical business requirement for legally onboarding franchisees in Canada.
     - **Status**: IN PROGRESS
     - **Is recurring issue?**: N
     - **Should Test frontend/backend/both after fix?**: both
-    - **Blocked on other issue**: None
+    - **Blocked on other issue**: None.
 
 **In progress Task List**:
-  - **Task 1**: Full implementation of Property Management, Task System, Workforce role, and Calendar View. (Priority: P0)
-     - **Where to resume**: First, resolve Issue 1 above. Once the property fields are fully implemented, the next step is to build the frontend for the Workforce user role, enabling them to view assigned jobs and tasks.
-     - **What will be achieved with this?**: This will deliver the major feature set requested by the user in message #166, transforming the app into a comprehensive service management platform.
-     - **Status**: IN PROGRESS
-     - **Should Test frontend/backend/both after fix?**: both
-     - **Blocked on something**: Issue 1: Complete the addition of and .
+  - **Task 1**: Replace mock logo with official logo. (Priority: P0)
+     - **Where to resume**: The user has uploaded the logo as an artifact (). The agent needs to add this asset to the  directory and update the  page (and any shared  component) to use the new image file instead of the placeholder.
+     - **What will be achieved with this?**: The PWA will have the correct branding, fulfilling a direct user request.
+     - **Status**: NOT STARTED
+     - **Should Test frontend/backend/both after fix?**: frontend
+     - **Blocked on something**: None.
 
 **Upcoming and Future Tasks**
-   - **Upcoming Tasks**:
-    - **(P0) Workforce & Task Management Frontend**: Build the UI for the  user role to view assigned jobs and track tasks. Also, build the UI for customers to see task status within a booking. (Files: new files in , updates to ).
-    - **(P1) Booking Calendar View**: Implement the calendar on the customer's booking page () using  to display scheduled jobs.
-    - **(P2) Integrate Property Selection into Booking Flow**: Modify the quote/booking process to allow users to select one of their saved properties, which then pre-fills the address information. (Files: ).
+   - **Upcoming Tasks (Next Phase)**:
+    - **(P0) Build Franchisee PWA Dashboard**: This is the next major feature after the application form is finalized. It's the core operational hub for franchisees. (Files: new pages under )
+        - Territory dashboard (FSAs, KPIs).
+        - Job inbox (accept/decline jobs).
+        - Job detail view.
+        - Settlement history view.
+    - **(P1) Build Admin PWA**: Create the administration console for CleanGrid HQ.
+        - Franchisee application review and approval screen.
+        - Territory management screen to assign FSAs.
    - **Future Tasks**:
-    - **(P1) Stripe & Escrow Integration**: Implement the payment and escrow system.
-    - **(P1) FSA-based Job Routing**: Implement the logic for admins to assign FSAs to franchisees and automatically route new bookings. (Files: , ).
-    - **(P2) Enhance Franchisee & Admin Dashboards**: Fully develop the dashboards for franchisees and admins with analytics and management tools, integrating the new property and task systems.
+    - **(P0) Full HR Bank Integration**:
+        - Frontend: In the franchisee PWA, when a job is accepted, trigger the backend API to send the Work Order to HR Bank.
+        - Backend: Implement the logic to generate and send the webhook payload to the (currently placeholder) HR Bank URL. Implement retry logic.
+        - Backend: Secure and enable the inbound webhook () to receive status updates from HR Bank and update the job status in the CleanGrid DB.
+    - **(P1) Customer Booking Flow**: Build out the full multi-step booking flow for customers (address selection, scheduling, payment).
+    - **(P1) Stripe Connect Integration**: Implement Stripe Connect for customer payments and automated franchisee payouts.
+    - **(P2) PWA Install Prompt**: Implement logic to prompt users to Add to Home Screen.
+    - **(P2) Smooth Animations**: Add UI animations for better user experience, as originally requested.
 
 **Completed work in this session**
-- **List of all completed tasks with file and method name**:
-    - Initial full-stack application scaffolding (, ).
-    - Multi-role user authentication (Customer, Admin, Franchisee).
-    - **Enhanced Quote Calculator**: Implemented a Clean Units (CU) based pricing model with real-time updates (, ).
-    - **UI/UX Streamlining**:
-        - Removed redundant questions (job type, service level, condition) from the quote flow ().
-        - Reorganized services into logical tiers in .
-        - Disabled recurring booking options for one-time services.
-    - **Custom Branding**: Integrated user-provided logo into  and .
-    - **Property Management (Backend)**: Built the backend models and API endpoints for customers to manage properties.
-    - **Workforce Role & Task System (Backend)**: Added backend models and APIs for the 'Workforce' user role and 'Task' tracking.
+- **Complete Frontend Rebuild (PWA)**: Successfully migrated the entire frontend from a problematic Expo/React Native application to a stable, fast, and modern React/Vite/Tailwind PWA.
+- **Backend Architecture Refactor**: Overhauled the FastAPI backend into a clean, modular structure with separate files for routes (, , etc.) and a central  for Pydantic models.
+- **Franchisee Application Feature**: Designed and built a complete, multi-step franchisee application form in the new PWA, connected to a working backend endpoint.
+- **Core PWA Screens**: Built and styled the essential PWA pages: Welcome, Login, Customer Home, and Profile.
+- **Critical Bug Resolved**: The long-standing issue of non-functional buttons on the web was definitively solved by moving away from React Native Web to a standard web stack. All authentication actions (login, logout, delete) now work reliably.
+- **Product Architecture Design**: Created a comprehensive system architecture, database schema, and API plan based on the user's detailed PRD.
 
 **Earlier issues found/mentioned but not fixed**
-   - None. The agent has been diligent in addressing all user-reported issues.
+   - **Issue 1**: The user's request for smooth animations for transitions was acknowledged but has not been implemented yet. This can be added as a polish step in the future.
 
 **Known issue recurrence from previous fork**
-  - None. This is the first summary.
+  - The primary recurring issue (web buttons failing in Expo) is no longer applicable due to the complete technology stack migration to a PWA.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend**: React Native, Expo, Expo Router (file-based routing), TypeScript, Zustand (state management), Axios.
-- **Backend**: Python, FastAPI, Pydantic, PyMongo.
-- **Database**: MongoDB.
-- **Architecture**: Monorepo with distinct  and  services.
+- **Frontend**: **PWA (Progressive Web App)**, React, Vite, TypeScript, Tailwind CSS, , Zustand, Axios.
+- **Backend**: Python, FastAPI, Pydantic, PyMongo, MongoDB.
+- **Architecture**: Mobile-first PWA frontend, modular FastAPI backend, Webhook-based integration pattern for third parties.
 
 **key DB schema**
-  - **users**: 
-  - **properties**: 
-  - **bookings**: 
-  - **tasks**: 
+The schema is now defined in . Key new models include:
+  - **FranchiseeApplication**: 
+  - **Franchisee**: 
+  - **WorkOrder**: 
+  - **TerritoryFSA**: 
+  - **AuditLog**: 
 
 **changes in tech stack**
-  -  was added as a frontend dependency.
+- **Complete Frontend Migration**: The entire frontend was moved from **Expo (React Native)** to **React + Vite**. All  and  libraries have been removed and replaced with web-standard libraries like .
 
 **All files of reference**
-- **Core Backend**:  (Contains almost all backend logic and has been heavily modified).
-- **Core Frontend**:
-    -  (The interactive quote screen).
-    -  (The property list screen).
-    -  (The form for adding a new property, recently updated).
-    -  (The form for editing a property, **needs updates**).
-- **Data**:  (Defines the services and test users).
-- **Documentation**: , .
+- : Defines the PWA build and server configuration.
+- : Tailwind CSS theme and configuration.
+- : Contains the application's routing structure using .
+- : The new multi-step franchisee application form.
+- : The main FastAPI file that now includes the modular routers.
+- : The single source of truth for all database models and API data structures.
+- : Contains the logic for the  endpoint.
 
 **Areas that need refactoring**:
-- The  file is becoming a monolith, containing all models, API routes, and business logic. It should be broken down into a more maintainable structure using FastAPI's  for different features (e.g., , , ).
+- The new PWA is cleanly built. No immediate refactoring is needed. Future work will involve replacing placeholder content/buttons on the home page with fully functional booking flows.
 
 **key api endpoints**
-- : User login.
-- : Fetch list of cleaning services.
-- : The main endpoint for calculating real-time quotes.
-- : List and create properties for the logged-in user.
-- : Update and delete a specific property.
+- : **NEW**. Submits a new franchisee application.
+- : **NEW**. Allows an admin to view submitted applications.
+- : **NEW**. A test endpoint to validate inbound webhook handling from HR Bank.
+- All core  endpoints (, etc.) are still present and functional.
 
 **Critical Info for New Agent**
-- **Iterate and Confirm**: The user is highly engaged and provides specific, valuable feedback. Continue the pattern of implementing a feature, summarizing it, and asking for confirmation.
-- **Finish the Current Task**: The immediate priority is to complete the addition of  and  to the property management feature (see Issue 1). This involves updating the Edit form, the property list view, and restarting the backend.
-- **Backend Refactor**: The  file is very large. Propose a refactoring effort to the user to split it into smaller, more manageable files. This will improve development speed and reduce the risk of errors.
+- **PWA is the standard**: You are no longer working on an Expo or React Native app. All development must be done in the React/Vite PWA located in . Do not use any  components or libraries.
+- **The user's PRD is canon**: The detailed prompt provided by the user (summarized in the problem statement) is the master plan. Refer to it for all feature development. The agent's proposed rollout plan (Franchisee App -> Franchisee PWA -> Admin PWA) has been approved by the user.
+- **Immediate Tasks**: Your first priorities are:
+    1.  Update the franchisee application with the new tax/business number fields (backend part is pending).
+    2.  Replace the placeholder logo on the Welcome page with the official one provided.
+- **Next Major Feature**: After the immediate tasks, begin building the **Franchisee PWA**, starting with the dashboard and job inbox, as per the approved plan.
+- **HR Bank URL**: The HR Bank API URL in  is a placeholder. The integration logic can be built, but it will need the correct production URL from the user to be fully functional.
 
 **documents created in this job**
   - 
   - 
+  - 
+  - 
+  - Multiple new PWA component files under .
 
-**Last 10 User Messages and any pending user messages**
-1.  **User (Msg 166)**: Requested property management, a task system, a workforce role, and a calendar view. **(In Progress)**
-2.  **User (Msg 173)**: Gave the Go ahead to implement the large feature set. **(Addressed)**
-3.  **User (Msg 188)**: Noticed no visible changes after a file was created. **(Addressed)** - Agent fixed by wiring up navigation.
-4.  **User (Msg 197)**: Requested to add apartment number and buzz number to properties. **(In Progress)** - This is the last user request and is currently being worked on.
+**Last 10 User Messages and any pending HUMAN messages** 
+1.  **User**: Asks to add business number and GST/HST fields to the franchisee application. (IN PROGRESS)
+2.  **User**: Provides the official logo and asks to remove the mock title/logo. (PENDING)
+3.  **User**: Reports an Expo Go error. (ADDRESSED - Explained that Expo is no longer used).
+4.  **User**: Asks what to do after the PWA migration. (ADDRESSED - Agent provided a summary).
+5.  **User**: Confirms the plan to move to a PWA: . (COMPLETED)
+6.  **User**: Proposes removing React Native code and building a PWA. (COMPLETED)
+7.  **User**: Reports logout is not working. (ADDRESSED - Agent fixed logout logic, but the user then decided to pivot to PWA anyway).
+8.  **User**: Approves the agent's recommended plan to build the Franchisee Application Form first. (COMPLETED)
+9.  **User**: Asks for a recommendation on what to build next. (ADDRESSED - Agent provided a phased plan).
+10. **User**: Provides a very detailed PRD for the entire CleanGrid system and asks for architecture deliverables. (COMPLETED)
 
 **Project Health Check:**
 - **Broken**:
-    - The Edit Property feature is out of sync with the data model. It lacks the fields for  and  and will fail if a user tries to edit a property that has them.
+  - No critical systems are broken. The new PWA foundation is stable and functional.
 - **Mocked**:
-    - None. The application is fully integrated with its backend.
+  - **HR Bank Integration**: The backend code and webhook endpoints exist, but they are not connected to a live HR Bank system. The API URL in the  file is a placeholder pointing to the app's own domain.
 
 **3rd Party Integrations**
- - **Stripe (Payments)**: Planned for future implementation. Will require a User API Key.
+ - **HR Bank**: For franchisee workforce management. Integration is architected but not fully implemented or connected to a live endpoint. Requires a User-provided API key and URL.
+ - **Stripe (Payments)**: Planned for future implementation. Will require User API Keys and Stripe Connect onboarding.
 
 **Testing status**
-  - **Testing agent used after significant changes**: NO
-  - **Troubleshoot agent used after agent stuck in loop**: NO
-  - **Test files created**: None
-  - **Known regressions**: The Edit Property screen () does not support the newly added  and  fields.
+  - **Testing agent used after significant changes**: YES. The screenshot tool was used extensively to test and verify every stage of the PWA rebuild.
+  - **Troubleshoot agent used after agent stuck in loop**: NO. The agent successfully debugged the Vite/Tailwind setup issues.
+  - **Test files created**: None.
+  - **Known regressions**: None. The migration to PWA fixed previous regressions.
 
 **Credentials to test flow:**
-- **Admin**:  / 
 - **Customer**:  / 
+- **Admin**:  / 
 - **Franchisee**:  / 
 - **Workforce**:  / 
 
 **What agent forgot to execute**
-- **Finish Property Feature**: The agent updated the Add Property screen but forgot to update the Edit Property screen () and the property list view () with the new  and  fields.
-- **Restart Backend**: The agent modified the backend  model in  but did not restart the backend service. The API does not yet reflect these changes.
+- The user's original request for smooth animations for transitions remains unimplemented. This is a low-priority polish item for the new PWA.
 
 </analysis>
