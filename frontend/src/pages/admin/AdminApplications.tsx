@@ -97,6 +97,13 @@ export default function AdminApplications() {
         <p className="text-gray-500">Review franchisee applications</p>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6">
         {['submitted', 'under_review', 'approved', 'rejected', 'all'].map((f) => (
@@ -129,11 +136,11 @@ export default function AdminApplications() {
       ) : (
         <div className="space-y-4">
           {applications.map((app) => (
-            <div key={app._id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div key={app.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="font-semibold text-secondary-900">{app.operatingName}</h3>
-                  <p className="text-sm text-gray-500">{app.contactName}</p>
+                  <h3 className="font-semibold text-secondary-900">{app.operating_name}</h3>
+                  <p className="text-sm text-gray-500">{app.contact_name}</p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(app.status)}`}>
                   {app.status.replace('_', ' ')}
@@ -147,17 +154,17 @@ export default function AdminApplications() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="w-4 h-4" />
-                  <span>Applied {new Date(app.applicationSubmittedAt).toLocaleDateString()}</span>
+                  <span>Applied {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : 'N/A'}</span>
                 </div>
-                {app.preferredFSAs && app.preferredFSAs.length > 0 && (
+                {app.preferred_fsas && app.preferred_fsas.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {app.preferredFSAs.slice(0, 5).map((fsa) => (
+                    {app.preferred_fsas.slice(0, 5).map((fsa) => (
                       <span key={fsa} className="text-xs bg-primary-50 text-primary px-2 py-0.5 rounded font-mono">
                         {fsa}
                       </span>
                     ))}
-                    {app.preferredFSAs.length > 5 && (
-                      <span className="text-xs text-gray-500">+{app.preferredFSAs.length - 5} more</span>
+                    {app.preferred_fsas.length > 5 && (
+                      <span className="text-xs text-gray-500">+{app.preferred_fsas.length - 5} more</span>
                     )}
                   </div>
                 )}
@@ -205,15 +212,15 @@ export default function AdminApplications() {
               <div className="space-y-3">
                 <div>
                   <label className="text-xs text-gray-500 uppercase">Operating Name</label>
-                  <p className="font-semibold">{selectedApp.operatingName}</p>
+                  <p className="font-semibold">{selectedApp.operating_name}</p>
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 uppercase">Legal Name</label>
-                  <p>{selectedApp.legalName} ({selectedApp.legalType})</p>
+                  <p>{selectedApp.legal_name} {selectedApp.legal_type ? `(${selectedApp.legal_type})` : ''}</p>
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 uppercase">Contact</label>
-                  <p>{selectedApp.contactName}</p>
+                  <p>{selectedApp.contact_name}</p>
                   <p className="text-sm text-gray-600">{selectedApp.email}</p>
                   <p className="text-sm text-gray-600">{selectedApp.phone}</p>
                 </div>
@@ -222,13 +229,20 @@ export default function AdminApplications() {
                   <p>{selectedApp.city}, {selectedApp.province}</p>
                 </div>
                 <div>
+                  <label className="text-xs text-gray-500 uppercase">Vehicle Access</label>
+                  <p>{selectedApp.vehicle_access ? '✅ Yes' : '❌ No'}</p>
+                </div>
+                <div>
                   <label className="text-xs text-gray-500 uppercase">Preferred FSAs</label>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedApp.preferredFSAs?.map((fsa) => (
+                    {selectedApp.preferred_fsas?.map((fsa) => (
                       <span key={fsa} className="text-xs bg-primary-50 text-primary px-2 py-1 rounded font-mono">
                         {fsa}
                       </span>
                     ))}
+                    {(!selectedApp.preferred_fsas || selectedApp.preferred_fsas.length === 0) && (
+                      <span className="text-gray-400 text-sm">None specified</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -236,7 +250,7 @@ export default function AdminApplications() {
               {(selectedApp.status === 'submitted' || selectedApp.status === 'under_review') && (
                 <div className="flex gap-3 pt-4 border-t border-gray-100">
                   <button
-                    onClick={() => handleReject(selectedApp._id)}
+                    onClick={() => handleReject(selectedApp.id)}
                     disabled={actionLoading}
                     className="flex-1 py-3 px-4 border border-red-300 text-red-600 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-red-50 disabled:opacity-50"
                   >
@@ -244,7 +258,7 @@ export default function AdminApplications() {
                     Reject
                   </button>
                   <button
-                    onClick={() => handleApprove(selectedApp._id)}
+                    onClick={() => handleApprove(selectedApp.id)}
                     disabled={actionLoading}
                     className="flex-1 py-3 px-4 bg-green-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50"
                   >
