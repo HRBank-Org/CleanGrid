@@ -13,17 +13,19 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 # ==================== FRANCHISEE MANAGEMENT ====================
 
 @router.get("/applications", response_model=Dict)
-async def get_pending_applications(request: Request, status_filter: Optional[str] = None):
+async def get_pending_applications(request: Request, status: Optional[str] = None):
     """Get franchisee applications for review"""
     db = request.app.state.db
     
     query = {}
-    if status_filter:
-        query["status"] = status_filter
-    else:
+    if status and status != "all":
+        query["status"] = status
+    elif not status:
+        # Default: show submitted/under_review
         query["status"] = {"$in": ["submitted", "under_review"]}
+    # If status == "all", query stays empty to get all
     
-    applications = await db.franchisees.find(query).sort("applicationSubmittedAt", 1).to_list(100)
+    applications = await db.franchisees.find(query).sort("applicationSubmittedAt", -1).to_list(100)
     
     return {
         "success": True,
@@ -32,6 +34,7 @@ async def get_pending_applications(request: Request, status_filter: Optional[str
                 "id": str(a["_id"]),
                 "operating_name": a.get("operatingName"),
                 "legal_name": a.get("legalName"),
+                "legal_type": a.get("legalType"),
                 "contact_name": a.get("contactName"),
                 "email": a.get("email"),
                 "phone": a.get("phone"),
