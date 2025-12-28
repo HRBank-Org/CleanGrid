@@ -78,6 +78,36 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
       </Route>
       
+      {/* Franchisee Routes */}
+      <Route path="/franchisee" element={<FranchiseeLogin />} />
+      <Route
+        element={
+          <ProtectedRoute redirectTo="/franchisee">
+            <FranchiseeLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/franchisee/dashboard" element={<FranchiseeDashboard />} />
+        <Route path="/franchisee/jobs" element={<FranchiseeJobs />} />
+        <Route path="/franchisee/settlements" element={<FranchiseeSettlements />} />
+        <Route path="/franchisee/profile" element={<FranchiseeProfile />} />
+      </Route>
+      
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminLogin />} />
+      <Route
+        element={
+          <ProtectedRoute redirectTo="/admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/applications" element={<AdminApplications />} />
+        <Route path="/admin/territories" element={<AdminTerritories />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
+      </Route>
+      
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
