@@ -141,4 +141,17 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 'auto',
   },
+  franchiseeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  franchiseeLinkText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '500',
+  },
 });
