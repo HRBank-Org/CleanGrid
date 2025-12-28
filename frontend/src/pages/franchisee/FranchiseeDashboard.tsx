@@ -64,11 +64,61 @@ export default function FranchiseeDashboard() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-          <p className="text-yellow-800 font-medium">Dashboard Unavailable</p>
-          <p className="text-yellow-600 text-sm mt-1">{error}</p>
-          <p className="text-yellow-600 text-sm mt-2">This may be because your franchisee profile is still being set up.</p>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-secondary-900">Welcome to CleanGrid</h1>
+          <p className="text-gray-500">Franchisee Portal</p>
+        </div>
+
+        {/* Onboarding Card */}
+        <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-6 text-white">
+          <h2 className="text-xl font-bold mb-2">Complete Your Setup</h2>
+          <p className="opacity-90 text-sm">Your franchisee profile is being configured. Here's what's next:</p>
+        </div>
+
+        {/* Steps */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-secondary-900">Application Submitted</h3>
+                <p className="text-sm text-gray-500">Your application has been received</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-secondary-900">Under Review</h3>
+                <p className="text-sm text-gray-500">Admin team is reviewing your application</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 opacity-50">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-gray-400 font-bold">3</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-secondary-900">Profile Activation</h3>
+                <p className="text-sm text-gray-500">Complete compliance docs & start accepting jobs</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Support */}
+        <div className="bg-primary-50 rounded-xl p-4 text-center">
+          <p className="text-sm text-primary">Questions? Contact <span className="font-semibold">support@cleangrid.com</span></p>
         </div>
       </div>
     )
