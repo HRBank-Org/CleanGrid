@@ -9,7 +9,7 @@ export default function Welcome() {
         <img 
           src="/cleangrid-logo.png" 
           alt="CleanGrid" 
-          className="h-20 mb-6"
+          className="h-40 mb-6"
         />
         <p className="text-gray-500 text-center max-w-xs">
           Book trusted cleaning services for your home or business across Canada
