@@ -6,10 +6,11 @@ export default function Welcome() {
     <div className="min-h-screen flex flex-col px-6 py-12 safe-top">
       {/* Logo & Tagline */}
       <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="w-24 h-24 bg-primary rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-          <span className="text-white text-4xl font-bold">CG</span>
-        </div>
-        <h1 className="text-3xl font-bold text-secondary-900 mb-2">CleanGrid</h1>
+        <img 
+          src="/cleangrid-logo.png" 
+          alt="CleanGrid" 
+          className="h-20 mb-6"
+        />
         <p className="text-gray-500 text-center max-w-xs">
           Book trusted cleaning services for your home or business across Canada
         </p>
