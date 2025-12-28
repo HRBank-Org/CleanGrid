@@ -186,6 +186,18 @@ async def get_dashboard(request: Request, credentials: HTTPAuthorizationCredenti
     if not franchisee:
         # Try to find by email (for users who applied before account linking)
         franchisee = await db.franchisees.find_one({"email": user.get("email")})
+        
+        # If found by email, link the user account to this franchisee
+        if franchisee and not franchisee.get("ownerId"):
+            await db.franchisees.update_one(
+                {"_id": franchisee["_id"]},
+                {"$set": {"ownerId": str(user["_id"])}}
+            )
+            # Also update user with franchisee role and ID
+            await db.users.update_one(
+                {"_id": user["_id"]},
+                {"$set": {"role": "franchisee_owner", "franchiseeId": str(franchisee["_id"])}}
+            )
     
     if not franchisee:
         raise HTTPException(
@@ -193,10 +205,36 @@ async def get_dashboard(request: Request, credentials: HTTPAuthorizationCredenti
             detail="Franchisee profile not found"
         )
     
-    # Get territory info
-    territories = await db.territories.find({
-        "currentFranchiseeId": str(franchisee["_id"])
-    }).to_list(100)
+    # Get territory info (from assigned FSAs or territories collection)
+    assigned_fsas = franchisee.get("assignedFSAs", [])
+    territories_data = []
+    
+    # If we have assigned FSAs, use those
+    if assigned_fsas:
+        for fsa_code in assigned_fsas:
+            territory = await db.territories.find_one({"fsaCode": fsa_code})
+            if territory:
+                territories_data.append({
+                    "fsa_code": fsa_code,
+                    "city": territory.get("city", franchisee.get("city", "")),
+                    "protection_status": territory.get("protectionStatus", "protected")
+                })
+            else:
+                # Use franchisee's city as default
+                territories_data.append({
+                    "fsa_code": fsa_code,
+                    "city": franchisee.get("city", ""),
+                    "protection_status": "protected"
+                })
+    else:
+        # Use preferred FSAs if no assigned FSAs yet
+        preferred_fsas = franchisee.get("preferredFSAs", [])
+        for fsa_code in preferred_fsas[:5]:  # Show first 5 preferred
+            territories_data.append({
+                "fsa_code": fsa_code,
+                "city": franchisee.get("city", ""),
+                "protection_status": "pending"
+            })
     
     # Get job stats
     now = datetime.utcnow()
