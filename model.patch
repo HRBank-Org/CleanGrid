@@ -1,0 +1,12 @@
+diff --git a/frontend/postcss.config.js b/frontend/postcss.config.js
+index 2e7af2b..a7f73a2 100644
+--- a/frontend/postcss.config.js
++++ b/frontend/postcss.config.js
+@@ -1,6 +1,5 @@
+ export default {
+   plugins: {
+-    tailwindcss: {},
+-    autoprefixer: {},
++    '@tailwindcss/postcss': {},
+   },
+ }
