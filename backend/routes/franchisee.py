@@ -1,13 +1,38 @@
 """Franchisee Routes for CleanGrid"""
 from fastapi import APIRouter, HTTPException, Depends, status, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from bson import ObjectId
+from jose import JWTError, jwt
+import os
 import logging
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/franchisee", tags=["Franchisee"])
+
+# Security
+security = HTTPBearer()
+SECRET_KEY = os.environ.get("SECRET_KEY", "neatify-secret-key-change-in-production")
+ALGORITHM = "HS256"
+
+async def get_current_user_from_token(credentials: HTTPAuthorizationCredentials, db):
+    """Extract and verify user from JWT token"""
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    return user
 
 # ==================== APPLICATION ENDPOINTS ====================
 
