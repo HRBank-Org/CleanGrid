@@ -34,7 +34,7 @@ import AdminApplications from './pages/admin/AdminApplications'
 import AdminTerritories from './pages/admin/AdminTerritories'
 import AdminProfile from './pages/admin/AdminProfile'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children, redirectTo = '/login' }: { children: React.ReactNode, redirectTo?: string }) {
   const { token, isLoading } = useAuthStore()
   
   if (isLoading) {
@@ -46,7 +46,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (!token) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={redirectTo} replace />
   }
   
   return <>{children}</>
