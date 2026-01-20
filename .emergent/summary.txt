@@ -1,178 +1,162 @@
 <analysis>
 
-**original_problem_statement**: The initial goal was to build CleanGrid, a full-stack Expo mobile app for booking cleaning services. The project was plagued by a critical, recurring bug on the web platform where authenticated actions (delete, cancel, logout) failed. After a partial fix, the user, frustrated with ongoing platform-specific issues, made a decisive pivot.
+**original_problem_statement**: The initial goal was to build CleanGrid, a full-stack PWA for booking cleaning services, connecting customers with franchisees. The user's vision is detailed in a comprehensive PRD, emphasizing a PWA-first approach, specific user roles (Customer, Franchisee, Admin), a territory model based on FSAs, and a critical integration with a third-party HR Bank system for franchisee workforce management.
 
-The new and current goal is to build CleanGrid as a **Progressive Web App (PWA)**, completely removing the Expo/React Native codebase. The PWA should be mobile-first and installable on iOS/Android from the browser.
-
-The user provided a comprehensive Product Requirements Document (PRD) which outlines the full vision:
-- **Core Business Model**: CleanGrid is a software platform connecting customers with franchisees. Franchisees are independent operators who manage their own workforce using a third-party HR Bank system.
-- **PWA-First Strategy**: Avoid App Store/Play Store delays.
-- **User Roles**: Customer, Franchisee Owner, Franchisee Staff, Admin, Support.
-- **Territory Model**: Franchisees are assigned protected territories based on Forward Sortation Areas (FSAs), but protection is conditional on performance KPIs.
-- **Franchisee Onboarding**: A public, multi-step application flow is required. Franchisees cannot accept jobs until compliance checks (insurance, Stripe onboarding, HR Bank linkage) are complete.
-- **HR Bank Integration**: Confirmed bookings in CleanGrid are pushed as Work Orders to the franchisee's HR Bank account via webhooks. Status updates are received back from HR Bank via inbound webhooks.
-- **Payments & Settlements**: CleanGrid facilitates payments via Stripe, collecting the full amount from customers and remitting net payouts to franchisees after deducting fees.
+In this session, the user requested several features and fixes, culminating in the request to begin the integration with HR Bank by analyzing its source code, for which they provided access to a private GitHub repository.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The project has been successfully and completely migrated from an Expo/React Native application to a **React + Vite PWA with a Tailwind CSS**. The previous Expo codebase has been deleted.
+A robust and functional React/Vite PWA with a FastAPI backend. The application features distinct, role-based portals for Customers, Franchisees, and Administrators, accessible via separate URLs (, , ).
 
-- **Frontend**: A brand new, mobile-first PWA built with React, Vite, , and Zustand for state management. It includes a functional and styled Welcome page, Login/Signup flow, a Customer Home page that displays services, a Profile page with working Logout, and a multi-step Franchisee Application form.
-- **Backend**: The FastAPI backend has been significantly refactored into a modular architecture. It now has separate route files for , , , and , and a comprehensive  file defining the data models based on the user's PRD. New endpoints for franchisee application, admin review, and webhook handling have been created and tested.
+- **Customer Portal**: Functional login, home page, and profile.
+- **Admin Portal**: A feature-rich dashboard including an application review/approval system and an interactive map-based territory management system for Forward Sortation Areas (FSAs).
+- **Franchisee Portal**: A dynamic dashboard that reflects real-time data from the backend, including account status, KPIs, assigned territories, and a complete job management inbox where franchisees can view, accept, and decline jobs.
+- **Internationalization**: The Welcome page supports both English and French, with a language toggle.
+- **Branding**: The official CleanGrid logo is implemented.
 
 **Last working item**:
-    - **Last item agent was working**: The user provided the official CleanGrid logo and requested to replace the placeholder/mock logo on the Welcome page.
-    - **Status**: NOT STARTED
-    - **Agent Testing Done**: N
-    - **Which testing method agent to use?**: Frontend testing agent. Use the screenshot tool to verify the new logo is correctly displayed on the  page.
-    - **User Testing Done**: N
+    - **Last item agent was working**: The user provided a private GitHub repository link and a Personal Access Token (PAT) for HRBankv12, the third-party system to be integrated. The agent successfully used the token to clone the repository into the  directory. The next step is to analyze this codebase.
+    - **Status**: NOT STARTED (The analysis of the cloned repository has not yet begun).
+    - **Agent Testing Done**: N/A
+    - **Which testing method agent to use?**: N/A. The next step is code analysis, not testing.
+    - **User Testing Done**: N/A
 
 **All Pending/In progress Issue list**:
-  - **Issue 1**:  Implement business number and provincial sales tax fields in the franchisee application. (Priority: P0)
-    - **Description**: The user requested that the franchisee application form collect a  (BN) and  for both Individual and Corporate entities, as these are required for business operations in Canada. The backend and database must also be updated to store this information.
-    - **Attempted fixes**: The agent successfully updated the frontend form in  to include the new input fields. The next step was to update the backend.
-    - **Next debug checklist**:
-        1. Modify the  and  Pydantic models in  to include  and  fields.
-        2. Update the  endpoint in  to accept and save these new fields to the database.
-        3. Restart the backend service.
-        4. Perform a full frontend test of the application form to ensure the data is submitted and saved correctly.
-    - **Why fix this issue and what will be achieved with the fix?**: This is a critical business requirement for legally onboarding franchisees in Canada.
-    - **Status**: IN PROGRESS
-    - **Is recurring issue?**: N
-    - **Should Test frontend/backend/both after fix?**: both
-    - **Blocked on other issue**: None.
+  - **Issue 1**:  Fix Franchisee Dashboard Not Found message after login (Priority: RESOLVED)
+    - **Description**: The user reported seeing a Not Found error after logging into the franchisee account. The agent debugged this and found the user account was not linked to a franchisee profile in the database.
+    - **Fix**: The agent manually linked the test franchisee user () to an approved franchisee record (Clean Stars Toronto) in the database. The backend was also updated to automatically link user and franchisee records on login if the emails match. The dashboard now correctly shows data for the linked franchisee.
+    - **Status**: RESOLVED
+  
+  - **Issue 2**: Fix Admin Application Review Flow (Priority: RESOLVED)
+    - **Description**: The user (Qais Nizami) reported that their application was pending and the admin approval flow was not working.
+    - **Fix**: The agent identified and fixed multiple issues:
+        1.  Frontend was using  instead of the required  method for approve/reject actions.
+        2.  Frontend component had field name mismatches (e.g.,  vs uid=0(root) gid=0(root) groups=0(root), camelCase vs. snake_case).
+        3.  The backend API for fetching approved applications was corrected.
+        The agent successfully approved Qais Nizami's application and verified it appears in the Approved list in the admin UI.
+    - **Status**: RESOLVED
 
 **In progress Task List**:
-  - **Task 1**: Replace mock logo with official logo. (Priority: P0)
-     - **Where to resume**: The user has uploaded the logo as an artifact (). The agent needs to add this asset to the  directory and update the  page (and any shared  component) to use the new image file instead of the placeholder.
-     - **What will be achieved with this?**: The PWA will have the correct branding, fulfilling a direct user request.
+  - **Task 1**: Integrate CleanGrid with the HR Bank system (Priority: P0)
+     - **Where to resume**: The source code for the HR Bank application has been successfully cloned into the  directory. The next step is to analyze this codebase to understand its architecture, API endpoints, data models, and webhook mechanisms.
+     - **What will be achieved with this?**: This is a core requirement from the PRD. The integration will allow CleanGrid to push confirmed bookings as Work Orders to the franchisee's HR Bank account.
      - **Status**: NOT STARTED
-     - **Should Test frontend/backend/both after fix?**: frontend
-     - **Blocked on something**: None.
+     - **Should Test frontend/backend/both after fix?**: both
+     - **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
-   - **Upcoming Tasks (Next Phase)**:
-    - **(P0) Build Franchisee PWA Dashboard**: This is the next major feature after the application form is finalized. It's the core operational hub for franchisees. (Files: new pages under )
-        - Territory dashboard (FSAs, KPIs).
-        - Job inbox (accept/decline jobs).
-        - Job detail view.
-        - Settlement history view.
-    - **(P1) Build Admin PWA**: Create the administration console for CleanGrid HQ.
-        - Franchisee application review and approval screen.
-        - Territory management screen to assign FSAs.
-   - **Future Tasks**:
-    - **(P0) Full HR Bank Integration**:
-        - Frontend: In the franchisee PWA, when a job is accepted, trigger the backend API to send the Work Order to HR Bank.
-        - Backend: Implement the logic to generate and send the webhook payload to the (currently placeholder) HR Bank URL. Implement retry logic.
-        - Backend: Secure and enable the inbound webhook () to receive status updates from HR Bank and update the job status in the CleanGrid DB.
-    - **(P1) Customer Booking Flow**: Build out the full multi-step booking flow for customers (address selection, scheduling, payment).
-    - **(P1) Stripe Connect Integration**: Implement Stripe Connect for customer payments and automated franchisee payouts.
-    - **(P2) PWA Install Prompt**: Implement logic to prompt users to Add to Home Screen.
-    - **(P2) Smooth Animations**: Add UI animations for better user experience, as originally requested.
+- **Upcoming Tasks**:
+  - **(P0) Full HR Bank Integration**:
+      - **Backend**: Based on the analysis of the  repo, implement the logic to generate and send a webhook payload (Work Order) to the HR Bank API when a franchisee accepts a job in CleanGrid.
+      - **Backend**: Implement the inbound webhook () to receive job status updates back from HR Bank.
+- **Future Tasks**:
+  - **(P1) Customer Booking Flow**: Build out the full multi-step booking flow for customers (address selection, scheduling, payment).
+  - **(P1) Stripe Connect Integration**: Implement Stripe Connect for customer payments and automated franchisee payouts.
+  - **(P2) Backend API for FSA Editing**: The admin can view and open an edit modal for FSAs, but the Save button is currently a placeholder. A backend endpoint is needed to handle FSA assignment and status updates.
+  - **(P2) PWA Install Prompt**: Implement logic to prompt users to Add to Home Screen.
+  - **(P2) Smooth Animations**: Add UI animations for better user experience, as originally requested.
 
 **Completed work in this session**
-- **Complete Frontend Rebuild (PWA)**: Successfully migrated the entire frontend from a problematic Expo/React Native application to a stable, fast, and modern React/Vite/Tailwind PWA.
-- **Backend Architecture Refactor**: Overhauled the FastAPI backend into a clean, modular structure with separate files for routes (, , etc.) and a central  for Pydantic models.
-- **Franchisee Application Feature**: Designed and built a complete, multi-step franchisee application form in the new PWA, connected to a working backend endpoint.
-- **Core PWA Screens**: Built and styled the essential PWA pages: Welcome, Login, Customer Home, and Profile.
-- **Critical Bug Resolved**: The long-standing issue of non-functional buttons on the web was definitively solved by moving away from React Native Web to a standard web stack. All authentication actions (login, logout, delete) now work reliably.
-- **Product Architecture Design**: Created a comprehensive system architecture, database schema, and API plan based on the user's detailed PRD.
+- **Role-Based Portals**: Created separate, fully-functional portals for Admin () and Franchisee () with distinct login pages and dashboards.
+- **Admin Territory Map**: Implemented an interactive Leaflet map in the admin dashboard to visualize and manage FSA territories, complete with province-based data loading, color-coding, and a functional detail/edit modal.
+- **Franchisee Job Management**: Built a complete job inbox for franchisees to view a list of jobs, filter by status, and accept or decline new job assignments. The franchisee dashboard stats (KPIs, job counts) update in real-time.
+- **Database Seeding**: Created and inserted multiple test jobs into the database for a test franchisee to enable full testing of the job management flow.
+- **Application Review Flow (FIXED)**: Repaired the entire admin workflow for reviewing and approving franchisee applications.
+- **Franchisee Dashboard (FIXED)**: Connected the franchisee dashboard to the backend, ensuring it displays real data for the logged-in user, including their business name, KPIs, and assigned territories.
+- **Internationalization (i18n)**: Added English and French language support to the Welcome page using .
+- **Branding**: Replaced the placeholder logo with the official CleanGrid logo and adjusted its size per user request.
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1**: The user's request for smooth animations for transitions was acknowledged but has not been implemented yet. This can be added as a polish step in the future.
+   - **Issue 1**: The user's request for smooth animations for transitions was acknowledged but has not been implemented yet. This is a low-priority polish item.
 
 **Known issue recurrence from previous fork**
-  - The primary recurring issue (web buttons failing in Expo) is no longer applicable due to the complete technology stack migration to a PWA.
+  - None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend**: **PWA (Progressive Web App)**, React, Vite, TypeScript, Tailwind CSS, , Zustand, Axios.
+- **Frontend**: PWA, React, Vite, TypeScript, Tailwind CSS, Zustand, , , , ****, ****.
 - **Backend**: Python, FastAPI, Pydantic, PyMongo, MongoDB.
-- **Architecture**: Mobile-first PWA frontend, modular FastAPI backend, Webhook-based integration pattern for third parties.
+- **Architecture**: Role-based PWA frontends, modular FastAPI backend, Webhook-based integration pattern.
 
 **key DB schema**
-The schema is now defined in . Key new models include:
-  - **FranchiseeApplication**: 
-  - **Franchisee**: 
-  - **WorkOrder**: 
-  - **TerritoryFSA**: 
-  - **AuditLog**: 
+- **users**: Now contains a  field (ObjectId) to link a user account to a franchisee record. Role can be .
+- **franchisees**: This collection now holds all approved franchisee applications. It contains  to link back to a user.
+- **bookings**: **NEW** collection created to store job/booking information for franchisees.
 
 **changes in tech stack**
-- **Complete Frontend Migration**: The entire frontend was moved from **Expo (React Native)** to **React + Vite**. All  and  libraries have been removed and replaced with web-standard libraries like .
+-  and  added for map visualizations.
+-  and  added for internationalization.
 
 **All files of reference**
-- : Defines the PWA build and server configuration.
-- : Tailwind CSS theme and configuration.
-- : Contains the application's routing structure using .
-- : The new multi-step franchisee application form.
-- : The main FastAPI file that now includes the modular routers.
-- : The single source of truth for all database models and API data structures.
-- : Contains the logic for the  endpoint.
+- : **NEW**. The entire codebase for the third-party system to be integrated.
+- : Significantly updated with new routing structure for admin and franchisee portals.
+- : **NEW**. Contains all pages for the admin portal.
+- : **NEW**. Contains all pages for the franchisee portal.
+- : **NEW**. The interactive map component.
+- : Updated with an interceptor to handle 401 errors by redirecting to the correct role-based login page.
+- : Updated to handle role-based navigation and return booleans on login success/failure.
+- : Updated to correctly fetch approved applications from the  collection.
+- : All endpoints updated to use FastAPI's dependency injection for authentication (). The dashboard endpoint was significantly enhanced to return real data.
 
 **Areas that need refactoring**:
-- The new PWA is cleanly built. No immediate refactoring is needed. Future work will involve replacing placeholder content/buttons on the home page with fully functional booking flows.
+- None at the moment. The code structure is clean and modular.
 
 **key api endpoints**
-- : **NEW**. Submits a new franchisee application.
-- : **NEW**. Allows an admin to view submitted applications.
-- : **NEW**. A test endpoint to validate inbound webhook handling from HR Bank.
-- All core  endpoints (, etc.) are still present and functional.
+- : Approves an application, creates a user, and moves the record to the  collection.
+- : Fetches all necessary data for the franchisee dashboard, including KPIs, territories, and compliance status.
+- : Fetches jobs for the franchisee, with status filtering.
+- : Marks a job as accepted by the franchisee.
+- : Marks a job as declined.
 
 **Critical Info for New Agent**
-- **PWA is the standard**: You are no longer working on an Expo or React Native app. All development must be done in the React/Vite PWA located in . Do not use any  components or libraries.
-- **The user's PRD is canon**: The detailed prompt provided by the user (summarized in the problem statement) is the master plan. Refer to it for all feature development. The agent's proposed rollout plan (Franchisee App -> Franchisee PWA -> Admin PWA) has been approved by the user.
-- **Immediate Tasks**: Your first priorities are:
-    1.  Update the franchisee application with the new tax/business number fields (backend part is pending).
-    2.  Replace the placeholder logo on the Welcome page with the official one provided.
-- **Next Major Feature**: After the immediate tasks, begin building the **Franchisee PWA**, starting with the dashboard and job inbox, as per the approved plan.
-- **HR Bank URL**: The HR Bank API URL in  is a placeholder. The integration logic can be built, but it will need the correct production URL from the user to be fully functional.
+- **The next major task is HR Bank Integration.** You must start by analyzing the cloned repository located at  to understand its architecture, APIs, and data models. The goal is to determine how to send a Work Order from CleanGrid to HR Bank when a franchisee accepts a job.
+- **The core PWA is stable and feature-complete** for this phase. All user-facing portals (Admin, Franchisee, Customer) are functional. The application review and job management flows have been fixed and tested.
+- **Test accounts are linked.** The  user is now linked to the Clean Stars Toronto franchisee, which has test jobs assigned to it. This allows for immediate testing of the franchisee portal.
 
 **documents created in this job**
-  - 
-  - 
-  - 
-  - 
-  - Multiple new PWA component files under .
+- Multiple new React components and pages for the Admin and Franchisee portals.
+- GeoJSON data files for map visualization (e.g., ).
+- Language files for i18n ().
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1.  **User**: Asks to add business number and GST/HST fields to the franchisee application. (IN PROGRESS)
-2.  **User**: Provides the official logo and asks to remove the mock title/logo. (PENDING)
-3.  **User**: Reports an Expo Go error. (ADDRESSED - Explained that Expo is no longer used).
-4.  **User**: Asks what to do after the PWA migration. (ADDRESSED - Agent provided a summary).
-5.  **User**: Confirms the plan to move to a PWA: . (COMPLETED)
-6.  **User**: Proposes removing React Native code and building a PWA. (COMPLETED)
-7.  **User**: Reports logout is not working. (ADDRESSED - Agent fixed logout logic, but the user then decided to pivot to PWA anyway).
-8.  **User**: Approves the agent's recommended plan to build the Franchisee Application Form first. (COMPLETED)
-9.  **User**: Asks for a recommendation on what to build next. (ADDRESSED - Agent provided a phased plan).
-10. **User**: Provides a very detailed PRD for the entire CleanGrid system and asks for architecture deliverables. (COMPLETED)
+- 10. **User**: Provides GitHub repo and PAT for HR Bank. (IN PROGRESS)
+- 9. **User**: Asks for customer login credentials. (COMPLETED)
+- 8. **User**: Asks for test jobs to be added to see the franchisee job list. (COMPLETED)
+- 7. **User**: Reports that the franchisee dashboard doesn't reflect the system. (COMPLETED - Fixed by linking user to franchisee data).
+- 6. **User**: Reports that the application review/activation flow is broken for their Qais Nizami application. (COMPLETED - Fixed backend API and frontend logic).
+- 5. **User**: Asks to be able to edit and visualize all FSAs on the map. (COMPLETED - Implemented province-based loading and an edit modal).
+- 4. **User**: Reports the franchisee dashboard shows Dashboard Unavailable / Not Found. (COMPLETED - Addressed as part of the broader franchisee portal fix).
+- 3. **User**: Requests map visualization for FSA management in the admin dashboard. (COMPLETED)
+- 2. **User**: Requests separate URLs for different user roles (Admin, Franchisee). (COMPLETED)
+- 1. **User**: Asks for admin login credentials. (COMPLETED)
 
 **Project Health Check:**
-- **Broken**:
-  - No critical systems are broken. The new PWA foundation is stable and functional.
+- **Broken**: No broken components. The application is in a stable, functional state.
 - **Mocked**:
-  - **HR Bank Integration**: The backend code and webhook endpoints exist, but they are not connected to a live HR Bank system. The API URL in the  file is a placeholder pointing to the app's own domain.
+    - **HR Bank Integration**: The connection itself is not yet built. The agent has the source code but needs to implement the API calls/webhooks between CleanGrid and HR Bank.
+    - **FSA Edit Save Action**: The frontend modal to edit an FSA's assignment exists, but the Save button currently only shows a browser alert. The backend API endpoint to persist this change has not been built.
 
 **3rd Party Integrations**
- - **HR Bank**: For franchisee workforce management. Integration is architected but not fully implemented or connected to a live endpoint. Requires a User-provided API key and URL.
- - **Stripe (Payments)**: Planned for future implementation. Will require User API Keys and Stripe Connect onboarding.
+ - **HR Bank**: For franchisee workforce management. The source code has been cloned locally to . Integration planning and implementation is the next major task. Requires User-provided API key and URL (to be discovered from the cloned repo).
+ - **Stripe (Payments)**: Planned for a future phase.
 
 **Testing status**
-  - **Testing agent used after significant changes**: YES. The screenshot tool was used extensively to test and verify every stage of the PWA rebuild.
-  - **Troubleshoot agent used after agent stuck in loop**: NO. The agent successfully debugged the Vite/Tailwind setup issues.
-  - **Test files created**: None.
-  - **Known regressions**: None. The migration to PWA fixed previous regressions.
+  - **Testing agent used after significant changes**: YES. The screenshot tool was used extensively to verify all major UI/UX changes, including the role-based portals, map visualization, and job management flows.
+  - **Troubleshoot agent used after agent stuck in loop**: NO. The agent successfully debugged issues on its own.
+  - **Test files created**: A script was created and run to seed the database with test jobs.
+  - **Known regressions**: None.
 
 **Credentials to test flow:**
-- **Customer**:  / 
-- **Admin**:  / 
-- **Franchisee**:  / 
-- **Workforce**:  / 
+| Role | Email | Password | Portal URL Suffix |
+|---|---|---|---|
+| Customer |  |  |  |
+| Franchisee |  |  |  |
+| Admin |  |  |  |
 
 **What agent forgot to execute**
-- The user's original request for smooth animations for transitions remains unimplemented. This is a low-priority polish item for the new PWA.
+- The user's original request for smooth animations for transitions remains unimplemented. This is considered a low-priority polish item.
 
 </analysis>
