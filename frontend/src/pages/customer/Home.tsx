@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 import api from '../../services/api'
-import { Sparkles, ChevronRight, Loader2 } from 'lucide-react'
+import { Sparkles, ChevronRight, Loader2, Home as HomeIcon, Building2 } from 'lucide-react'
 
 interface Service {
   _id: string
@@ -9,8 +10,10 @@ interface Service {
   category: string
   serviceType: string
   description: string
-  basePrice: number
-  durationMinutes: number
+  basePriceResidential: number
+  basePriceCommercial: number
+  pricePerSqFt: number
+  estimatedDuration: number
 }
 
 export default function Home() {
