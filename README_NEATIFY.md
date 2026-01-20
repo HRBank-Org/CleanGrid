@@ -358,7 +358,7 @@ The app is configured for production with:
 ## 🛠️ Development
 
 ### Running Locally
-Frontend is accessible at: `https://gridmobile.preview.emergentagent.com`
+Frontend is accessible at: `https://hrcode-review.preview.emergentagent.com`
 Backend API is running at: `http://localhost:8001`
 
 ### Testing
