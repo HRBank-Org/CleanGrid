@@ -16,6 +16,7 @@ import ApplicationStatus from './pages/ApplicationStatus'
 
 // Customer Pages
 import Home from './pages/customer/Home'
+import Book from './pages/customer/Book'
 import Bookings from './pages/customer/Bookings'
 import Properties from './pages/customer/Properties'
 import Profile from './pages/customer/Profile'
