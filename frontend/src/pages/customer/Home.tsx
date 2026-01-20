@@ -18,6 +18,7 @@ interface Service {
 
 export default function Home() {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   
@@ -33,6 +34,30 @@ export default function Home() {
       console.error('Failed to load services:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const getServicePrice = (service: Service) => {
+    if (service.serviceType === 'commercial') {
+      return service.basePriceCommercial
+    }
+    return service.basePriceResidential
+  }
+
+  const formatDuration = (minutes: number) => {
+    if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60)
+      const mins = minutes % 60
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+    }
+    return `${minutes} min`
+  }
+
+  const handleBookService = (serviceId?: string) => {
+    if (serviceId) {
+      navigate(`/book?service=${serviceId}`)
+    } else {
+      navigate('/book')
     }
   }
   
@@ -57,7 +82,10 @@ export default function Home() {
             <Sparkles className="w-6 h-6" />
           </div>
         </div>
-        <button className="mt-4 bg-white text-primary font-semibold px-5 py-2.5 rounded-xl text-sm active:scale-[0.98] transition-transform">
+        <button 
+          onClick={() => handleBookService()}
+          className="mt-4 bg-white text-primary font-semibold px-5 py-2.5 rounded-xl text-sm active:scale-[0.98] transition-transform"
+        >
           Get Quote
         </button>
       </div>
@@ -66,7 +94,6 @@ export default function Home() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-secondary-900">Our Services</h2>
-          <button className="text-primary text-sm font-medium">View all</button>
         </div>
         
         {loading ? (
@@ -82,20 +109,30 @@ export default function Home() {
             {services.map((service) => (
               <div
                 key={service._id}
+                onClick={() => handleBookService(service._id)}
                 className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm active:scale-[0.99] transition-transform cursor-pointer"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-secondary-900">{service.name}</h3>
-                      <span className="text-xs px-2 py-0.5 bg-primary-50 text-primary rounded-full capitalize">
+                      <span className={`text-xs px-2 py-0.5 rounded-full capitalize flex items-center gap-1 ${
+                        service.serviceType === 'commercial' 
+                          ? 'bg-blue-50 text-blue-600' 
+                          : 'bg-primary-50 text-primary'
+                      }`}>
+                        {service.serviceType === 'commercial' ? (
+                          <Building2 className="w-3 h-3" />
+                        ) : (
+                          <HomeIcon className="w-3 h-3" />
+                        )}
                         {service.serviceType}
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 line-clamp-1">{service.description}</p>
                     <div className="flex items-center gap-3 mt-2">
-                      <span className="text-primary font-bold">${service.basePrice}</span>
-                      <span className="text-xs text-gray-400">{service.durationMinutes} min</span>
+                      <span className="text-primary font-bold">From ${getServicePrice(service).toFixed(2)}</span>
+                      <span className="text-xs text-gray-400">~{formatDuration(service.estimatedDuration)}</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-300" />
