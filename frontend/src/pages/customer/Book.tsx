@@ -858,13 +858,13 @@ export default function Book() {
             </div>
 
             {/* Payment Notice */}
-            <div className="bg-blue-50 rounded-xl p-4 flex items-start gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Check className="w-4 h-4 text-blue-600" />
+            <div className="bg-green-50 rounded-xl p-4 flex items-start gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Check className="w-4 h-4 text-green-600" />
               </div>
               <div>
-                <p className="font-medium text-blue-900">Secure Payment</p>
-                <p className="text-sm text-blue-700">Payment will be held securely until the job is completed to your satisfaction.</p>
+                <p className="font-medium text-green-900">Payment Authorized</p>
+                <p className="text-sm text-green-700">Your payment of ${quote?.totalPrice.toFixed(2)} has been authorized. You'll only be charged after your cleaning is complete.</p>
               </div>
             </div>
 
