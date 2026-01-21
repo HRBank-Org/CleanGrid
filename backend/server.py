@@ -1145,35 +1145,115 @@ async def patch_property(
 
 @api_router.post("/properties/validate-address")
 async def validate_address(data: dict):
-    """Validate an address using postal code format and coverage check"""
-    address = data.get("address", "")
-    postal_code = data.get("postalCode", "")
+    """Validate an address using OpenStreetMap/Nominatim geocoding and postal code format check"""
+    import re
+    
+    address = data.get("address", "").strip()
+    postal_code = data.get("postalCode", "").strip()
+    city = data.get("city", "").strip()
+    province = data.get("province", "").strip()
     
     # Validate postal code format (Canadian)
-    import re
     postal_regex = r'^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$'
     if not re.match(postal_regex, postal_code):
         return {
             "valid": False,
+            "geocoded": False,
             "message": "Invalid postal code format. Use Canadian format (e.g., M5V 3A8)"
         }
-    
-    # Extract FSA and check if we have coverage
-    fsa_code = extract_fsa(postal_code)
-    franchisee = await find_franchisee_by_fsa(fsa_code)
     
     # Format postal code consistently
     formatted_postal = postal_code.upper().replace(" ", "")
     if len(formatted_postal) == 6:
         formatted_postal = f"{formatted_postal[:3]} {formatted_postal[3:]}"
     
-    return {
-        "valid": True,
-        "fsa": fsa_code,
-        "hasCoverage": franchisee is not None,
-        "formattedPostalCode": formatted_postal,
-        "message": "Address validated" if franchisee else f"Note: No service coverage in {fsa_code} yet"
-    }
+    # Extract FSA and check if we have coverage
+    fsa_code = extract_fsa(postal_code)
+    franchisee = await find_franchisee_by_fsa(fsa_code)
+    
+    # Build full address for geocoding
+    full_address_parts = [address]
+    if city:
+        full_address_parts.append(city)
+    if province:
+        full_address_parts.append(province)
+    full_address_parts.append(formatted_postal)
+    full_address_parts.append("Canada")
+    
+    full_address = ", ".join(full_address_parts)
+    
+    # Try to geocode with OpenStreetMap Nominatim (free, no API key required)
+    geocode_result = None
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={
+                    "q": full_address,
+                    "format": "json",
+                    "addressdetails": 1,
+                    "limit": 1,
+                    "countrycodes": "ca"  # Restrict to Canada
+                },
+                headers={
+                    "User-Agent": "CleanGrid/1.0 (cleaning service booking app)"
+                },
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                results = response.json()
+                if results and len(results) > 0:
+                    result = results[0]
+                    geocode_result = {
+                        "lat": float(result.get("lat", 0)),
+                        "lng": float(result.get("lon", 0)),
+                        "displayName": result.get("display_name", ""),
+                        "type": result.get("type", ""),
+                        "importance": float(result.get("importance", 0))
+                    }
+                    
+                    # Extract address details if available
+                    addr_details = result.get("address", {})
+                    if addr_details:
+                        geocode_result["addressDetails"] = {
+                            "houseNumber": addr_details.get("house_number"),
+                            "road": addr_details.get("road"),
+                            "city": addr_details.get("city") or addr_details.get("town") or addr_details.get("village"),
+                            "state": addr_details.get("state"),
+                            "postcode": addr_details.get("postcode"),
+                            "country": addr_details.get("country")
+                        }
+    except Exception as e:
+        logging.warning(f"Geocoding failed: {str(e)}")
+    
+    # Determine validation status
+    if geocode_result:
+        # Address was found by geocoder
+        return {
+            "valid": True,
+            "geocoded": True,
+            "fsa": fsa_code,
+            "hasCoverage": franchisee is not None,
+            "formattedPostalCode": formatted_postal,
+            "coordinates": {
+                "lat": geocode_result["lat"],
+                "lng": geocode_result["lng"]
+            },
+            "formattedAddress": geocode_result["displayName"],
+            "addressDetails": geocode_result.get("addressDetails"),
+            "message": "Address verified" if franchisee else f"Address verified. Note: No service coverage in {fsa_code} yet"
+        }
+    else:
+        # Geocoding failed but postal code is valid format
+        return {
+            "valid": True,
+            "geocoded": False,
+            "fsa": fsa_code,
+            "hasCoverage": franchisee is not None,
+            "formattedPostalCode": formatted_postal,
+            "message": "Address format is valid but could not be verified. Please double-check the address." if franchisee else f"Address format valid but unverified. No service coverage in {fsa_code} yet"
+        }
 
 @api_router.delete("/properties/{property_id}")
 async def delete_property(property_id: str, current_user: User = Depends(get_current_user)):
