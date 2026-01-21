@@ -470,6 +470,35 @@ async def login(credentials: UserLogin):
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+@api_router.patch("/auth/profile")
+async def update_profile(profile_update: UserProfileUpdate, current_user: User = Depends(get_current_user)):
+    """Update user profile including profile photo"""
+    update_data = {k: v for k, v in profile_update.dict().items() if v is not None}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    # If photo is too large (> 500KB base64), reject it
+    if "profilePhoto" in update_data:
+        photo_size = len(update_data["profilePhoto"])
+        if photo_size > 700000:  # ~500KB in base64
+            raise HTTPException(status_code=400, detail="Photo too large. Please use a smaller image.")
+    
+    result = db.users.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="No changes made")
+    
+    # Fetch updated user
+    updated_user = db.users.find_one({"_id": ObjectId(current_user.id)})
+    updated_user["_id"] = str(updated_user["_id"])
+    del updated_user["password"]
+    
+    return updated_user
+
 # SERVICE ROUTES
 @api_router.post("/services", response_model=Service)
 async def create_service(service: ServiceCreate, current_user: User = Depends(get_current_user)):
