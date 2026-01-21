@@ -290,6 +290,81 @@ def send_booking_cancelled(
     )
 
 
+def send_booking_cancelled_email(
+    to_email: str,
+    customer_name: str,
+    booking_id: str,
+    refund_amount: float,
+    refund_percentage: int
+) -> bool:
+    """Send detailed cancellation email with refund info based on policy"""
+    
+    if refund_percentage == 100:
+        refund_text = f"""
+        <div class="info-box" style="background: #f0fdf4; border-color: #bbf7d0;">
+            <p style="margin: 0; color: #166534;">
+                <strong>✅ Full Refund:</strong> ${refund_amount:.2f} CAD will be refunded to your card within 5-10 business days.
+            </p>
+        </div>
+        """
+        policy_text = "You cancelled more than 24 hours before your scheduled appointment."
+    elif refund_percentage == 50:
+        refund_text = f"""
+        <div class="info-box" style="background: #fef3c7; border-color: #fcd34d;">
+            <p style="margin: 0; color: #92400e;">
+                <strong>⚠️ Partial Refund:</strong> ${refund_amount:.2f} CAD (50%) will be refunded to your card within 5-10 business days.
+            </p>
+            <p style="margin: 8px 0 0 0; color: #92400e; font-size: 13px;">
+                A ${refund_amount:.2f} CAD cancellation fee applies as you cancelled within 12-24 hours of your appointment.
+            </p>
+        </div>
+        """
+        policy_text = "You cancelled between 12-24 hours before your scheduled appointment."
+    else:
+        refund_text = f"""
+        <div class="info-box" style="background: #fef2f2; border-color: #fecaca;">
+            <p style="margin: 0; color: #991b1b;">
+                <strong>❌ No Refund:</strong> Unfortunately, cancellations within 12 hours of the scheduled appointment are not eligible for a refund.
+            </p>
+        </div>
+        """
+        policy_text = "You cancelled less than 12 hours before your scheduled appointment."
+    
+    content = f"""
+    <h2 style="color: #111827; margin-bottom: 8px;">Booking Cancelled</h2>
+    <p style="color: #6b7280;">Hi {customer_name},</p>
+    <p style="color: #6b7280;">Your booking (#{booking_id[:8].upper()}) has been cancelled.</p>
+    
+    {refund_text}
+    
+    <p style="color: #6b7280; font-size: 14px;">{policy_text}</p>
+    
+    <div class="info-box" style="background: #f9fafb; border-color: #e5e7eb;">
+        <h4 style="margin: 0 0 8px 0; color: #374151;">Our Cancellation Policy:</h4>
+        <ul style="margin: 0; padding-left: 20px; color: #6b7280; font-size: 13px;">
+            <li>24+ hours before: Full refund (100%)</li>
+            <li>12-24 hours before: Partial refund (50%)</li>
+            <li>Less than 12 hours: No refund</li>
+        </ul>
+    </div>
+    
+    <p style="color: #6b7280; font-size: 14px;">
+        Need to rebook? We'd love to have you back!
+    </p>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="https://cleangrid.at/book" class="button">Book Again</a>
+    </div>
+    """
+    
+    return send_email(
+        to_email=to_email,
+        subject=f"Booking Cancelled - #{booking_id[:8].upper()}",
+        html_content=get_base_template(content),
+        to_name=customer_name
+    )
+
+
 def send_welcome_email(to_email: str, name: str) -> bool:
     """Send welcome email to new customers"""
     
