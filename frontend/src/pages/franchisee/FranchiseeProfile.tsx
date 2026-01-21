@@ -1,16 +1,28 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, Building2, MapPin, FileCheck, CreditCard, Bell, HelpCircle, LogOut, ChevronRight } from 'lucide-react'
+import { Building2, MapPin, FileCheck, CreditCard, Bell, HelpCircle, LogOut, ChevronRight } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 import { useLanguageStore } from '../../stores/languageStore'
+import Avatar from '../../components/Avatar'
 
 export default function FranchiseeProfile() {
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
+  const { user, logout, updateProfile } = useAuthStore()
   const { t } = useLanguageStore()
+  const [uploading, setUploading] = useState(false)
 
   const handleLogout = () => {
     logout()
     navigate('/franchisee')
+  }
+
+  const handlePhotoChange = async (base64: string) => {
+    setUploading(true)
+    try {
+      await updateProfile({ profilePhoto: base64 })
+    } finally {
+      setUploading(false)
+    }
   }
 
   const menuItems = [
@@ -27,9 +39,14 @@ export default function FranchiseeProfile() {
       {/* Profile Header */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center">
-            <User className="w-8 h-8 text-primary" />
-          </div>
+          <Avatar
+            name={user?.name}
+            photo={user?.profilePhoto}
+            size="lg"
+            editable
+            onPhotoChange={handlePhotoChange}
+            uploading={uploading}
+          />
           <div>
             <h2 className="text-xl font-bold text-secondary-900">{user?.name}</h2>
             <p className="text-gray-500">{user?.email}</p>
