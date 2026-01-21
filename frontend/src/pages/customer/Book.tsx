@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 import api from '../../services/api'
+import StripePayment from '../../components/StripePayment'
 import { 
   ArrowLeft, 
   MapPin, 
@@ -14,7 +15,8 @@ import {
   Check,
   Loader2,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from 'lucide-react'
 
 interface Property {
