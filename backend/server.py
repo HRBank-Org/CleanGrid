@@ -1776,11 +1776,16 @@ from routes.franchisee import router as franchisee_router
 from routes.webhooks import router as webhooks_router
 from routes.admin import router as admin_router
 from routes.payments import router as payments_router
+from routes.training import router as training_router, init_db as init_training_db
+
+# Initialize training module with database
+init_training_db(db)
 
 api_router.include_router(franchisee_router)
 api_router.include_router(webhooks_router)
 api_router.include_router(admin_router)
 api_router.include_router(payments_router)
+api_router.include_router(training_router)
 
 # Include the router in the main app
 app.include_router(api_router)
