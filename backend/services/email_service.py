@@ -459,7 +459,7 @@ def send_franchisee_new_job(
 def send_password_reset_email(to_email: str, name: str, reset_token: str) -> bool:
     """Send password reset email"""
     
-    reset_url = f"" + FRONTEND_URL + "/reset-password?token={reset_token}"
+    reset_url = f"{FRONTEND_URL}/reset-password?token={reset_token}"
     
     content = f"""
     <h2 style="color: #111827; margin-bottom: 8px;">Reset Your Password 🔐</h2>
