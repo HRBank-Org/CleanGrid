@@ -471,7 +471,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 @api_router.patch("/auth/profile")
-async def update_profile(profile_update: UserProfileUpdate, current_user: User = Depends(get_current_user)):
+def update_profile(profile_update: UserProfileUpdate, current_user: User = Depends(get_current_user)):
     """Update user profile including profile photo"""
     update_data = {k: v for k, v in profile_update.dict().items() if v is not None}
     
@@ -489,10 +489,7 @@ async def update_profile(profile_update: UserProfileUpdate, current_user: User =
         {"$set": update_data}
     )
     
-    if result.modified_count == 0:
-        raise HTTPException(status_code=400, detail="No changes made")
-    
-    # Fetch updated user
+    # Fetch updated user (even if no changes, return current state)
     updated_user = db.users.find_one({"_id": ObjectId(current_user.id)})
     updated_user["_id"] = str(updated_user["_id"])
     del updated_user["password"]
