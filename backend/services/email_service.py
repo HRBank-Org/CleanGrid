@@ -514,3 +514,126 @@ def send_password_changed_email(to_email: str, name: str) -> bool:
         html_content=get_base_template(content),
         to_name=name
     )
+
+
+
+# ==================== WORKER EMAILS ====================
+
+def send_worker_invite_email(
+    to_email: str,
+    worker_name: str,
+    franchisee_name: str,
+    invite_code: str
+) -> bool:
+    """Send invitation email to a new worker"""
+    
+    invite_url = f"https://cleangrid.at/worker/join?code={invite_code}"
+    
+    content = f"""
+    <h2 style="color: #111827; margin-bottom: 8px;">You're Invited to Join CleanGrid!</h2>
+    <p style="color: #6b7280;">Hi {worker_name},</p>
+    <p style="color: #6b7280;">
+        <strong>{franchisee_name}</strong> has invited you to join their cleaning team on CleanGrid.
+    </p>
+    
+    <div class="info-box" style="background: #f0fdf4; border-color: #bbf7d0;">
+        <h4 style="margin: 0 0 8px 0; color: #166534;">What's Next?</h4>
+        <ol style="margin: 0; padding-left: 20px; color: #166534;">
+            <li>Click the button below to create your account</li>
+            <li>Complete the required training courses</li>
+            <li>Start accepting cleaning jobs!</li>
+        </ol>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{invite_url}" class="button">Accept Invitation</a>
+    </div>
+    
+    <p style="color: #9ca3af; font-size: 12px; margin-top: 30px;">
+        This invitation expires in 7 days. If you didn't expect this email, please ignore it.
+    </p>
+    """
+    
+    return send_email(
+        to_email=to_email,
+        subject=f"Join {franchisee_name}'s Team on CleanGrid",
+        html_content=get_base_template(content),
+        to_name=worker_name
+    )
+
+
+def send_worker_welcome_email(
+    to_email: str,
+    worker_name: str,
+    franchisee_name: str
+) -> bool:
+    """Send welcome email after worker creates account"""
+    
+    content = f"""
+    <h2 style="color: #111827; margin-bottom: 8px;">Welcome to CleanGrid, {worker_name}!</h2>
+    <p style="color: #6b7280;">
+        Your account has been created and you're now part of <strong>{franchisee_name}'s</strong> team.
+    </p>
+    
+    <div class="info-box">
+        <h4 style="margin: 0 0 12px 0; color: #374151;">Before You Start</h4>
+        <p style="color: #6b7280; margin: 0;">
+            You'll need to complete our training courses to ensure you deliver the CleanGrid quality experience. 
+            The training covers:
+        </p>
+        <ul style="color: #6b7280; margin: 12px 0 0 0; padding-left: 20px;">
+            <li>Basic Cleaning SOP</li>
+            <li>Equipment Operation</li>
+            <li>Customer Service Standards</li>
+        </ul>
+    </div>
+    
+    <p style="color: #6b7280;">
+        Once you complete all training, you'll be eligible to receive job assignments.
+    </p>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="https://cleangrid.at/worker/training" class="button">Start Training</a>
+    </div>
+    """
+    
+    return send_email(
+        to_email=to_email,
+        subject="Welcome to CleanGrid - Complete Your Training",
+        html_content=get_base_template(content),
+        to_name=worker_name
+    )
+
+
+def send_worker_training_complete_email(
+    to_email: str,
+    worker_name: str
+) -> bool:
+    """Send email when worker completes all training"""
+    
+    content = f"""
+    <h2 style="color: #111827; margin-bottom: 8px;">🎉 Training Complete!</h2>
+    <p style="color: #6b7280;">Congratulations, {worker_name}!</p>
+    <p style="color: #6b7280;">
+        You've successfully completed all required CleanGrid training courses. 
+        You're now eligible to receive job assignments.
+    </p>
+    
+    <div class="info-box" style="background: #f0fdf4; border-color: #bbf7d0;">
+        <p style="margin: 0; color: #166534;">
+            <strong>You're all set!</strong> Your franchisee will now be able to assign you to cleaning jobs.
+            Make sure to keep your availability updated in the app.
+        </p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="https://cleangrid.at/worker" class="button">Go to Dashboard</a>
+    </div>
+    """
+    
+    return send_email(
+        to_email=to_email,
+        subject="Training Complete - You're Ready to Work!",
+        html_content=get_base_template(content),
+        to_name=worker_name
+    )
