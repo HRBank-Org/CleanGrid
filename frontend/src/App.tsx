@@ -11,6 +11,8 @@ import AdminLayout from './layouts/AdminLayout'
 import Welcome from './pages/Welcome'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import FranchiseeApply from './pages/FranchiseeApply'
 import ApplicationStatus from './pages/ApplicationStatus'
 
