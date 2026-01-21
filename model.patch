@@ -11,180 +11,197 @@ diff --git a/HRBankv12 b/HRBankv12
 -Subproject commit 1ba95cad29de1a21e5ea8c7b5932ad465b0748b7
 +Subproject commit 1ba95cad29de1a21e5ea8c7b5932ad465b0748b7-dirty
 diff --git a/model.patch b/model.patch
-index c986e3d..e69de29 100644
+index 56b123c..e69de29 100644
 --- a/model.patch
 +++ b/model.patch
-@@ -1,173 +0,0 @@
--diff --git a/backend/requirements.txt b/backend/requirements.txt
--index 0224c1a..3c2d099 100644
----- a/backend/requirements.txt
--+++ b/backend/requirements.txt
--@@ -64,6 +64,7 @@ shellingham==1.5.4
-- six==1.17.0
-- starlette==0.37.2
-- stripe==14.2.0
--+twilio==9.9.1
-- typer==0.20.0
-- typing-inspection==0.4.2
-- typing_extensions==4.15.0
+@@ -1,190 +0,0 @@
+-diff --git a/CleanGrid b/CleanGrid
+---- a/CleanGrid
+-+++ b/CleanGrid
+-@@ -1 +1 @@
+--Subproject commit 30a66f3d82b1f87f7523f3c821f58c4afd66fa89
+-+Subproject commit 30a66f3d82b1f87f7523f3c821f58c4afd66fa89-dirty
+-diff --git a/HRBankv12 b/HRBankv12
+---- a/HRBankv12
+-+++ b/HRBankv12
+-@@ -1 +1 @@
+--Subproject commit 1ba95cad29de1a21e5ea8c7b5932ad465b0748b7
+-+Subproject commit 1ba95cad29de1a21e5ea8c7b5932ad465b0748b7-dirty
 -diff --git a/model.patch b/model.patch
--index 6f0d663..e69de29 100644
+-index c986e3d..e69de29 100644
 ---- a/model.patch
 -+++ b/model.patch
--@@ -1,156 +0,0 @@
+-@@ -1,173 +0,0 @@
+--diff --git a/backend/requirements.txt b/backend/requirements.txt
+--index 0224c1a..3c2d099 100644
+----- a/backend/requirements.txt
+--+++ b/backend/requirements.txt
+--@@ -64,6 +64,7 @@ shellingham==1.5.4
+-- six==1.17.0
+-- starlette==0.37.2
+-- stripe==14.2.0
+--+twilio==9.9.1
+-- typer==0.20.0
+-- typing-inspection==0.4.2
+-- typing_extensions==4.15.0
 --diff --git a/model.patch b/model.patch
---index 5ebcf79..e69de29 100644
+--index 6f0d663..e69de29 100644
 ----- a/model.patch
 --+++ b/model.patch
---@@ -1,94 +0,0 @@
----diff --git a/frontend/src/index.css b/frontend/src/index.css
----index f741502..da058ae 100644
------- a/frontend/src/index.css
----+++ b/frontend/src/index.css
----@@ -1,5 +1,14 @@
---- @import "tailwindcss";
---- 
----+@theme {
----+  --color-primary: #00BFA6;
----+  --color-primary-dark: #00A896;
----+  --color-primary-light: #4DD0B8;
----+  --color-primary-50: #E6FAF7;
----+  --color-secondary: #0A2342;
----+  --color-secondary-900: #0A2342;
----+}
----+
---- /* Custom base styles */
---- @layer base {
----   * {
+--@@ -1,156 +0,0 @@
 ---diff --git a/model.patch b/model.patch
----index 919fdb8..e69de29 100644
+---index 5ebcf79..e69de29 100644
 ------ a/model.patch
 ---+++ b/model.patch
----@@ -1,70 +0,0 @@
+---@@ -1,94 +0,0 @@
 ----diff --git a/frontend/src/index.css b/frontend/src/index.css
-----index 9b7ffbc..f741502 100644
+----index f741502..da058ae 100644
 ------- a/frontend/src/index.css
 ----+++ b/frontend/src/index.css
-----@@ -1,6 +1,4 @@
------@tailwind base;
------@tailwind components;
------@tailwind utilities;
-----+@import "tailwindcss";
+----@@ -1,5 +1,14 @@
+---- @import "tailwindcss";
 ---- 
+----+@theme {
+----+  --color-primary: #00BFA6;
+----+  --color-primary-dark: #00A896;
+----+  --color-primary-light: #4DD0B8;
+----+  --color-primary-50: #E6FAF7;
+----+  --color-secondary: #0A2342;
+----+  --color-secondary-900: #0A2342;
+----+}
+----+
 ---- /* Custom base styles */
 ---- @layer base {
-----@@ -13,16 +11,16 @@
-----   }
-----   
-----   body {
------    @apply font-sans antialiased bg-gray-50 text-secondary-900;
-----+    font-family: 'Inter', system-ui, sans-serif;
-----+    -webkit-font-smoothing: antialiased;
-----+    -moz-osx-font-smoothing: grayscale;
-----+    background-color: #f9fafb;
-----+    color: #0A2342;
-----     padding-top: env(safe-area-inset-top);
-----     padding-bottom: env(safe-area-inset-bottom);
-----     padding-left: env(safe-area-inset-left);
-----     padding-right: env(safe-area-inset-right);
-----   }
------  
------  input, button, textarea, select {
------    @apply font-sans;
------  }
----- }
----- 
----- /* Custom utilities */
-----@@ -38,18 +36,4 @@
-----   .pb-safe {
-----     padding-bottom: max(1rem, env(safe-area-inset-bottom));
-----   }
------  
------  .min-h-screen-safe {
------    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
------  }
------}
------
------/* Hide scrollbar for a cleaner mobile look */
------.no-scrollbar::-webkit-scrollbar {
------  display: none;
------}
------
------.no-scrollbar {
------  -ms-overflow-style: none;
------  scrollbar-width: none;
----- }
+----   * {
 ----diff --git a/model.patch b/model.patch
-----index 7971847..e69de29 100644
+----index 919fdb8..e69de29 100644
 ------- a/model.patch
 ----+++ b/model.patch
-----@@ -1,12 +0,0 @@
------diff --git a/frontend/postcss.config.js b/frontend/postcss.config.js
------index 2e7af2b..a7f73a2 100644
--------- a/frontend/postcss.config.js
------+++ b/frontend/postcss.config.js
------@@ -1,6 +1,5 @@
------ export default {
------   plugins: {
-------    tailwindcss: {},
-------    autoprefixer: {},
------+    '@tailwindcss/postcss': {},
------   },
+----@@ -1,70 +0,0 @@
+-----diff --git a/frontend/src/index.css b/frontend/src/index.css
+-----index 9b7ffbc..f741502 100644
+-------- a/frontend/src/index.css
+-----+++ b/frontend/src/index.css
+-----@@ -1,6 +1,4 @@
+------@tailwind base;
+------@tailwind components;
+------@tailwind utilities;
+-----+@import "tailwindcss";
+----- 
+----- /* Custom base styles */
+----- @layer base {
+-----@@ -13,16 +11,16 @@
+-----   }
+-----   
+-----   body {
+------    @apply font-sans antialiased bg-gray-50 text-secondary-900;
+-----+    font-family: 'Inter', system-ui, sans-serif;
+-----+    -webkit-font-smoothing: antialiased;
+-----+    -moz-osx-font-smoothing: grayscale;
+-----+    background-color: #f9fafb;
+-----+    color: #0A2342;
+-----     padding-top: env(safe-area-inset-top);
+-----     padding-bottom: env(safe-area-inset-bottom);
+-----     padding-left: env(safe-area-inset-left);
+-----     padding-right: env(safe-area-inset-right);
+-----   }
+------  
+------  input, button, textarea, select {
+------    @apply font-sans;
+------  }
 ----- }
---diff --git a/test_result.md b/test_result.md
---index 187cba4..6f57929 100644
------ a/test_result.md
---+++ b/test_result.md
---@@ -100,4 +100,49 @@
--- 
--- #====================================================================================================
--- # Testing Data - Main Agent and testing sub agent both should log testing data below this section
----#====================================================================================================
---\ No newline at end of file
---+#====================================================================================================
---+
---+user_problem_statement: "Test the franchisee application endpoint at POST /api/franchisee/apply with new businessNumber and taxNumber fields"
---+
---+backend:
---+  - task: "Franchisee Application Endpoint with New Fields"
---+    implemented: true
---+    working: true
---+    file: "/app/backend/routes/franchisee.py"
---+    stuck_count: 0
---+    priority: "high"
---+    needs_retesting: false
---+    status_history:
---+        - working: true
---+          agent: "testing"
---+          comment: "✅ PASSED: POST /api/franchisee/apply endpoint working correctly. Successfully accepts and saves businessNumber (123456789RC0001) and taxNumber (RT0001) fields. Returns 200 status with success:true and application_id. GET /api/franchisee/application/{id} retrieval also working. Duplicate email validation working (returns 400). Required field validation working (returns 400). All test cases passed."
---+
---+frontend:
---+  - task: "Frontend Integration (Not Tested)"
---+    implemented: false
---+    working: "NA"
---+    file: "N/A"
---+    stuck_count: 0
---+    priority: "low"
---+    needs_retesting: false
---+    status_history:
---+        - working: "NA"
---+          agent: "testing"
---+          comment: "Frontend testing not performed as per system limitations - only backend testing conducted"
---+
---+metadata:
---+  created_by: "testing_agent"
---+  version: "1.0"
---+  test_sequence: 1
---+  run_ui: false
---+
---+test_plan:
---+  current_focus:
---+    - "Franchisee Application Endpoint with New Fields"
---+  stuck_tasks: []
---+  test_all: false
---+  test_priority: "high_first"
---+
---+agent_communication:
---+    - agent: "testing"
---+      message: "✅ Backend testing completed successfully. The POST /api/franchisee/apply endpoint is working correctly with the new businessNumber and taxNumber fields. All validations are functioning properly. The endpoint accepts the test data, saves it to MongoDB, and returns the expected response format. No issues found."
---\ No newline at end of file
+----- 
+----- /* Custom utilities */
+-----@@ -38,18 +36,4 @@
+-----   .pb-safe {
+-----     padding-bottom: max(1rem, env(safe-area-inset-bottom));
+-----   }
+------  
+------  .min-h-screen-safe {
+------    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+------  }
+------}
+------
+------/* Hide scrollbar for a cleaner mobile look */
+------.no-scrollbar::-webkit-scrollbar {
+------  display: none;
+------}
+------
+------.no-scrollbar {
+------  -ms-overflow-style: none;
+------  scrollbar-width: none;
+----- }
+-----diff --git a/model.patch b/model.patch
+-----index 7971847..e69de29 100644
+-------- a/model.patch
+-----+++ b/model.patch
+-----@@ -1,12 +0,0 @@
+------diff --git a/frontend/postcss.config.js b/frontend/postcss.config.js
+------index 2e7af2b..a7f73a2 100644
+--------- a/frontend/postcss.config.js
+------+++ b/frontend/postcss.config.js
+------@@ -1,6 +1,5 @@
+------ export default {
+------   plugins: {
+-------    tailwindcss: {},
+-------    autoprefixer: {},
+------+    '@tailwindcss/postcss': {},
+------   },
+------ }
+---diff --git a/test_result.md b/test_result.md
+---index 187cba4..6f57929 100644
+------ a/test_result.md
+---+++ b/test_result.md
+---@@ -100,4 +100,49 @@
+--- 
+--- #====================================================================================================
+--- # Testing Data - Main Agent and testing sub agent both should log testing data below this section
+----#====================================================================================================
+---\ No newline at end of file
+---+#====================================================================================================
+---+
+---+user_problem_statement: "Test the franchisee application endpoint at POST /api/franchisee/apply with new businessNumber and taxNumber fields"
+---+
+---+backend:
+---+  - task: "Franchisee Application Endpoint with New Fields"
+---+    implemented: true
+---+    working: true
+---+    file: "/app/backend/routes/franchisee.py"
+---+    stuck_count: 0
+---+    priority: "high"
+---+    needs_retesting: false
+---+    status_history:
+---+        - working: true
+---+          agent: "testing"
+---+          comment: "✅ PASSED: POST /api/franchisee/apply endpoint working correctly. Successfully accepts and saves businessNumber (123456789RC0001) and taxNumber (RT0001) fields. Returns 200 status with success:true and application_id. GET /api/franchisee/application/{id} retrieval also working. Duplicate email validation working (returns 400). Required field validation working (returns 400). All test cases passed."
+---+
+---+frontend:
+---+  - task: "Frontend Integration (Not Tested)"
+---+    implemented: false
+---+    working: "NA"
+---+    file: "N/A"
+---+    stuck_count: 0
+---+    priority: "low"
+---+    needs_retesting: false
+---+    status_history:
+---+        - working: "NA"
+---+          agent: "testing"
+---+          comment: "Frontend testing not performed as per system limitations - only backend testing conducted"
+---+
+---+metadata:
+---+  created_by: "testing_agent"
+---+  version: "1.0"
+---+  test_sequence: 1
+---+  run_ui: false
+---+
+---+test_plan:
+---+  current_focus:
+---+    - "Franchisee Application Endpoint with New Fields"
+---+  stuck_tasks: []
+---+  test_all: false
+---+  test_priority: "high_first"
+---+
+---+agent_communication:
+---+    - agent: "testing"
+---+      message: "✅ Backend testing completed successfully. The POST /api/franchisee/apply endpoint is working correctly with the new businessNumber and taxNumber fields. All validations are functioning properly. The endpoint accepts the test data, saves it to MongoDB, and returns the expected response format. No issues found."
+---\ No newline at end of file
