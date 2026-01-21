@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
+import Avatar from '../../components/Avatar'
 import {
   User,
   MapPin,
@@ -10,11 +12,27 @@ import {
   FileText,
   LogOut,
   ChevronRight,
+  Check,
 } from 'lucide-react'
 
 export default function Profile() {
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
+  const { user, logout, updateProfile, isLoading } = useAuthStore()
+  const [uploading, setUploading] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  
+  const handlePhotoChange = async (base64: string) => {
+    setUploading(true)
+    try {
+      const success = await updateProfile({ profilePhoto: base64 })
+      if (success) {
+        setShowSuccess(true)
+        setTimeout(() => setShowSuccess(false), 2000)
+      }
+    } finally {
+      setUploading(false)
+    }
+  }
   
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -43,15 +61,29 @@ export default function Profile() {
     <div className="px-5 py-6 safe-top">
       <h1 className="text-2xl font-bold text-secondary-900 mb-6">Profile</h1>
       
+      {/* Success Toast */}
+      {showSuccess && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg z-50 animate-fadeIn">
+          <Check className="w-4 h-4" />
+          Photo updated!
+        </div>
+      )}
+      
       {/* Profile Card */}
       <div className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm text-center">
-        <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl font-bold text-white">
-            {user?.name?.charAt(0).toUpperCase()}
-          </span>
+        <div className="flex justify-center mb-4">
+          <Avatar
+            name={user?.name}
+            photo={user?.profilePhoto}
+            size="lg"
+            editable
+            onPhotoChange={handlePhotoChange}
+            uploading={uploading}
+          />
         </div>
         <h2 className="text-xl font-semibold text-secondary-900">{user?.name}</h2>
         <p className="text-gray-500">{user?.email}</p>
+        <p className="text-xs text-primary mt-1">Tap photo to change</p>
       </div>
       
       {/* Menu Sections */}
