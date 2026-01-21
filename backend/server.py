@@ -327,40 +327,100 @@ async def send_booking_to_hrbank(booking_id: str) -> dict:
             "address": booking["address"]
         })
         
-        # Prepare payload for HR Bank
+        # Get franchisee details for routing
+        franchisee = None
+        if booking.get("franchiseeId"):
+            franchisee = await db.users.find_one({"_id": ObjectId(booking["franchiseeId"])})
+        
+        # Get service details
+        service = None
+        if booking.get("serviceId"):
+            service = await db.services.find_one({"_id": ObjectId(booking["serviceId"])})
+        
+        # Calculate estimated duration (default 2 hours if not specified)
+        estimated_duration = service.get("estimatedDuration", 120) if service else 120
+        
+        # Calculate workers needed based on square footage and service type
+        sqft = booking.get("squareFeet", 1000)
+        workers_needed = 1
+        if sqft > 2000:
+            workers_needed = 2
+        if sqft > 4000:
+            workers_needed = 3
+        
+        # Determine priority based on booking timing
+        scheduled_date = booking.get("scheduledDate")
+        priority = "normal"
+        if scheduled_date:
+            if isinstance(scheduled_date, str):
+                scheduled_date = datetime.fromisoformat(scheduled_date.replace('Z', '+00:00'))
+            hours_until = (scheduled_date - datetime.utcnow()).total_seconds() / 3600
+            if hours_until < 24:
+                priority = "high"
+            elif hours_until < 48:
+                priority = "normal"
+            else:
+                priority = "low"
+        
+        # NEW PAYLOAD FORMAT - routes by franchisee email
         payload = {
-            "_id": str(booking["_id"]),
-            "serviceId": booking.get("serviceId"),
-            "serviceType": booking.get("serviceType"),
-            "address": booking.get("address"),
-            "postalCode": booking.get("postalCode"),
-            "squareFeet": booking.get("squareFeet"),
-            "scheduledDate": booking["scheduledDate"].isoformat() if isinstance(booking["scheduledDate"], datetime) else booking["scheduledDate"],
-            "isRecurring": booking.get("isRecurring", False),
-            "recurringFrequency": booking.get("recurringFrequency"),
-            "totalPrice": booking.get("totalPrice"),
-            "notes": booking.get("notes"),
-            "customerId": booking.get("customerId"),
-            "franchiseeId": booking.get("franchiseeId"),
-            "fsaCode": booking.get("fsaCode"),
-            "status": booking.get("status"),
-            "escrowStatus": booking.get("escrowStatus"),
-            "createdAt": booking["createdAt"].isoformat() if isinstance(booking["createdAt"], datetime) else booking["createdAt"],
+            "cleangrid_booking_id": str(booking["_id"]),
+            
+            # Franchisee info for routing (HR Bank looks up employer by email)
+            "franchisee": {
+                "email": franchisee.get("email") if franchisee else None,
+                "name": franchisee.get("name") if franchisee else None,
+                "phone": franchisee.get("phone") if franchisee else None,
+                "cleangrid_id": str(franchisee["_id"]) if franchisee else None
+            } if franchisee else None,
+            
+            # Service details
+            "service": {
+                "name": service.get("name") if service else booking.get("serviceName", "Cleaning Service"),
+                "type": booking.get("serviceType", "residential"),
+                "category": service.get("category") if service else "regular",
+                "scheduledDate": booking["scheduledDate"].isoformat() if isinstance(booking["scheduledDate"], datetime) else booking["scheduledDate"],
+                "estimatedDuration": estimated_duration,  # in minutes
+                "isRecurring": booking.get("isRecurring", False),
+                "recurringFrequency": booking.get("recurringFrequency")
+            },
+            
+            # Location details
+            "location": {
+                "address": booking.get("address"),
+                "postalCode": booking.get("postalCode"),
+                "fsaCode": booking.get("fsaCode"),
+                "apartmentNumber": property_doc.get("apartmentNumber") if property_doc else None,
+                "buzzNumber": property_doc.get("buzzNumber") if property_doc else None,
+                "accessNotes": property_doc.get("notes") if property_doc else None
+            },
+            
+            # Customer contact info
             "customer": {
                 "name": customer.get("name") if customer else None,
                 "phone": customer.get("phone") if customer else None,
                 "email": customer.get("email") if customer else None
             },
-            "property": {
-                "apartmentNumber": property_doc.get("apartmentNumber") if property_doc else None,
-                "buzzNumber": property_doc.get("buzzNumber") if property_doc else None,
-                "notes": property_doc.get("notes") if property_doc else None
-            } if property_doc else None
+            
+            # Payment/escrow info
+            "payment": {
+                "totalPrice": booking.get("totalPrice", 0),
+                "escrowStatus": booking.get("escrowStatus", "held"),
+                "paymentIntentId": booking.get("paymentIntentId")
+            },
+            
+            # Work order preferences
+            "workOrder": {
+                "priority": priority,
+                "workersNeeded": workers_needed,
+                "notes": booking.get("notes"),
+                "quoteDetails": booking.get("quoteDetails")  # bedrooms, bathrooms, addons
+            }
         }
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{HRBANK_API_URL}/api/external/bookings",
+                f"{HRBANK_API_URL}/api/partner/work-orders",
                 headers={
                     "X-API-Key": HRBANK_API_KEY,
                     "Content-Type": "application/json"
@@ -371,14 +431,18 @@ async def send_booking_to_hrbank(booking_id: str) -> dict:
             result = response.json()
             
             if result.get("success"):
-                # Store HR Bank task ID in Neatify
+                # Store HR Bank work order ID in CleanGrid
                 await db.bookings.update_one(
                     {"_id": ObjectId(booking_id)},
                     {"$set": {
-                        "hrbankTaskId": result.get("hrbank_task_id"),
-                        "hrbankWorkplace": result.get("routed_to_workplace")
+                        "hrbankWorkOrderId": result.get("work_order_id"),
+                        "hrbankStatus": "pending",
+                        "hrbankSentAt": datetime.utcnow()
                     }}
                 )
+                logging.info(f"Booking {booking_id} sent to HR Bank: work_order_id={result.get('work_order_id')}")
+            else:
+                logging.warning(f"HR Bank rejected booking {booking_id}: {result}")
             
             return result
     except Exception as e:
