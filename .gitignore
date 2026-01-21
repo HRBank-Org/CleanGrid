@@ -84,3 +84,8 @@ android-sdk/
 .env.*.local
 .env.development
 .env.test
+
+# Exclude reference/analysis repositories
+HRBankv12/
+CleanGrid/
+
