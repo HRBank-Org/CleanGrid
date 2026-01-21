@@ -221,8 +221,8 @@ export default function Book() {
   }
 
   const handleSubmitBooking = async () => {
-    if (!selectedProperty || !selectedService || !selectedDate || !selectedTime || !quote) {
-      setError('Please complete all steps')
+    if (!selectedProperty || !selectedService || !selectedDate || !selectedTime || !quote || !paymentIntentId) {
+      setError('Please complete all steps including payment')
       return
     }
 
@@ -242,7 +242,9 @@ export default function Book() {
         isRecurring: !!recurring,
         recurringFrequency: recurring || null,
         totalPrice: quote.totalPrice,
-        notes: notes
+        notes: notes,
+        paymentIntentId: paymentIntentId,
+        paymentStatus: 'authorized'
       }
 
       await api.post('/bookings', bookingData)
