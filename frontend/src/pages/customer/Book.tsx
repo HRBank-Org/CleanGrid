@@ -693,16 +693,73 @@ export default function Book() {
             </div>
 
             <button
-              onClick={() => setStep('confirm')}
+              onClick={() => setStep('payment')}
               disabled={!selectedDate || !selectedTime}
               className="w-full py-4 bg-primary text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Review Booking
+              Continue to Payment
             </button>
           </div>
         )}
 
-        {/* Step 4: Confirm */}
+        {/* Step 4: Payment */}
+        {step === 'payment' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-secondary-900 mb-1">Payment</h2>
+              <p className="text-gray-500 text-sm">Secure payment - charged after completion</p>
+            </div>
+
+            {/* Order Summary */}
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">{selectedService?.name}</span>
+                <span className="font-medium">${quote?.basePrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Area ({selectedProperty?.squareFeet} sq ft)</span>
+                <span className="font-medium">${quote?.sqftPrice.toFixed(2)}</span>
+              </div>
+              {quote && quote.recurringDiscount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Recurring discount</span>
+                  <span>-${quote.recurringDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Tax (HST 13%)</span>
+                <span className="font-medium">${quote?.taxAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-gray-200 font-semibold">
+                <span>Total</span>
+                <span className="text-primary">${quote?.totalPrice.toFixed(2)} CAD</span>
+              </div>
+            </div>
+
+            {/* Payment Form */}
+            {quote && user && (
+              <StripePayment
+                amount={quote.totalPrice}
+                bookingId={bookingId || `temp_${Date.now()}`}
+                serviceName={selectedService?.name || 'Cleaning Service'}
+                customerEmail={user.email}
+                onSuccess={(intentId) => {
+                  setPaymentIntentId(intentId)
+                  setStep('confirm')
+                }}
+                onError={(err) => setError(err)}
+              />
+            )}
+
+            <div className="text-center">
+              <p className="text-xs text-gray-400">
+                Your card will be authorized but not charged until your cleaning is completed.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Confirm */}
         {step === 'confirm' && (
           <div className="space-y-4">
             <div>
