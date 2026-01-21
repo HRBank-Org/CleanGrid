@@ -83,6 +83,7 @@ export default function App() {
         <Route path="/bookings" element={<Bookings />} />
         <Route path="/properties" element={<Properties />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/help" element={<HelpSupport />} />
       </Route>
       
       {/* Franchisee Routes */}
