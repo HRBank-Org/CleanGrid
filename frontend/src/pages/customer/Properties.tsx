@@ -126,6 +126,7 @@ export default function Properties() {
     setEditingId(null)
     setError(null)
     setAddressValid(null)
+    setGeocodeInfo(null)
     setShowModal(true)
   }
 
@@ -143,6 +144,7 @@ export default function Properties() {
     setEditingId(property._id)
     setError(null)
     setAddressValid(true) // Assume existing addresses are valid
+    setGeocodeInfo(null)
     setShowModal(true)
   }
 
