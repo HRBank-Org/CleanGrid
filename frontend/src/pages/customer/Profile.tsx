@@ -240,17 +240,17 @@ export default function Profile() {
         
         {/* Support */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <a
-            href="mailto:support@cleangrid.at"
+          <button
+            onClick={() => navigate('/help')}
             className="w-full flex items-center gap-4 px-4 py-4 text-left hover:bg-gray-50 transition-colors border-b border-gray-100"
           >
             <HelpCircle className="w-5 h-5 text-gray-400" />
             <div className="flex-1">
               <span className="text-secondary-900">Help & Support</span>
-              <p className="text-sm text-gray-400">support@cleangrid.at</p>
+              <p className="text-sm text-gray-400">FAQs, contact us</p>
             </div>
-            <Mail className="w-5 h-5 text-gray-300" />
-          </a>
+            <ChevronRight className="w-5 h-5 text-gray-300" />
+          </button>
           
           <button
             onClick={() => navigate('/terms')}
