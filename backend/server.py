@@ -78,12 +78,20 @@ class User(UserBase):
     postalCode: Optional[str] = None
     assignedFSAs: Optional[List[str]] = []
     franchiseeId: Optional[str] = None  # For workforce: which franchisee they work for
+    profilePhoto: Optional[str] = None  # Base64 encoded photo or URL
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     
     class Config:
         populate_by_name = True
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    postalCode: Optional[str] = None
+    profilePhoto: Optional[str] = None  # Base64 encoded photo
 
 # Property Models
 class PropertyCreate(BaseModel):
