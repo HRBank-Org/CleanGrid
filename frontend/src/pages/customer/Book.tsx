@@ -323,8 +323,10 @@ export default function Book() {
                 setStep('property')
               } else if (step === 'schedule') {
                 setStep('service')
-              } else {
+              } else if (step === 'payment') {
                 setStep('schedule')
+              } else {
+                setStep('payment')
               }
             }}
             className="p-2 -ml-2 hover:bg-gray-100 rounded-full"
