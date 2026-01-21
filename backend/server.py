@@ -1405,9 +1405,13 @@ async def get_admin_stats(current_user: User = Depends(get_current_user)):
     total_franchisees = await db.users.count_documents({"role": "franchisee"})
     completed_bookings = await db.bookings.count_documents({"status": "completed"})
     
-    # Calculate total revenue
-    completed = await db.bookings.find({"status": "completed"}).to_list(1000)
-    total_revenue = sum(booking.get("totalPrice", 0) for booking in completed)
+    # Calculate total revenue using aggregation (optimized)
+    revenue_pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {"_id": None, "totalRevenue": {"$sum": "$totalPrice"}}}
+    ]
+    revenue_result = await db.bookings.aggregate(revenue_pipeline).to_list(1)
+    total_revenue = revenue_result[0]["totalRevenue"] if revenue_result else 0
     
     return {
         "totalBookings": total_bookings,
@@ -1423,17 +1427,29 @@ async def get_franchisee_earnings(current_user: User = Depends(get_current_user)
     if current_user.role != "franchisee":
         raise HTTPException(status_code=403, detail="Franchisee access required")
     
-    completed_bookings = await db.bookings.find({
-        "franchiseeId": current_user.id,
-        "status": "completed"
-    }).to_list(1000)
+    # Use aggregation for optimized query (only fetch what we need)
+    earnings_pipeline = [
+        {"$match": {"franchiseeId": current_user.id, "status": "completed"}},
+        {"$group": {
+            "_id": None,
+            "totalRevenue": {"$sum": "$totalPrice"},
+            "jobCount": {"$sum": 1}
+        }}
+    ]
+    result = await db.bookings.aggregate(earnings_pipeline).to_list(1)
     
-    total_earnings = sum(booking.get("totalPrice", 0) * 0.8 for booking in completed_bookings)  # 80% to franchisee
+    if result:
+        total_revenue = result[0]["totalRevenue"]
+        job_count = result[0]["jobCount"]
+        total_earnings = total_revenue * 0.82  # 82% to franchisee (18% platform fee)
+    else:
+        total_earnings = 0
+        job_count = 0
     
     return {
         "totalEarnings": total_earnings,
-        "completedJobs": len(completed_bookings),
-        "averageJobValue": total_earnings / len(completed_bookings) if completed_bookings else 0
+        "completedJobs": job_count,
+        "averageJobValue": total_earnings / job_count if job_count > 0 else 0
     }
 
 # PROPERTY MANAGEMENT ROUTES
