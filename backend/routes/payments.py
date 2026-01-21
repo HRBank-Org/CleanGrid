@@ -1,6 +1,7 @@
 """
 Stripe Payment Routes for CleanGrid
 Handles payment processing for cleaning service bookings
+Includes Stripe Connect for franchisee payouts
 """
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
@@ -15,6 +16,9 @@ load_dotenv()
 # Initialize Stripe
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
+# Platform fee percentage (CleanGrid keeps 18%, franchisee gets 82%)
+PLATFORM_FEE_PERCENT = 18
+
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
@@ -24,6 +28,7 @@ class CreatePaymentIntentRequest(BaseModel):
     customer_email: str
     customer_name: str
     service_name: str
+    franchisee_stripe_account: Optional[str] = None  # For Connect transfers
     metadata: Optional[dict] = None
 
 
@@ -32,12 +37,212 @@ class ConfirmPaymentRequest(BaseModel):
     booking_id: str
 
 
+class CreateConnectAccountRequest(BaseModel):
+    franchisee_email: str
+    franchisee_name: str
+    business_name: Optional[str] = None
+    return_url: str
+    refresh_url: str
+
+
+class TransferToFranchiseeRequest(BaseModel):
+    payment_intent_id: str
+    franchisee_stripe_account: str
+    booking_id: str
+
+
 @router.get("/config")
 def get_stripe_config():
     """Return publishable key for frontend"""
     return {
-        "publishableKey": os.getenv("STRIPE_PUBLISHABLE_KEY")
+        "publishableKey": os.getenv("STRIPE_PUBLISHABLE_KEY"),
+        "platformFeePercent": PLATFORM_FEE_PERCENT
     }
+
+
+# ==================== STRIPE CONNECT FOR FRANCHISEES ====================
+
+@router.post("/connect/create-account")
+def create_connect_account(request: CreateConnectAccountRequest):
+    """
+    Create a Stripe Connect Express account for a franchisee.
+    Returns an onboarding URL where the franchisee can complete setup.
+    """
+    try:
+        # Create a Connect Express account
+        account = stripe.Account.create(
+            type="express",
+            country="CA",  # Canada
+            email=request.franchisee_email,
+            capabilities={
+                "card_payments": {"requested": True},
+                "transfers": {"requested": True},
+            },
+            business_type="individual",
+            business_profile={
+                "name": request.business_name or request.franchisee_name,
+                "mcc": "7349",  # Cleaning services
+                "product_description": "Professional cleaning services via CleanGrid platform"
+            },
+            metadata={
+                "franchisee_name": request.franchisee_name,
+                "platform": "cleangrid"
+            }
+        )
+        
+        # Create onboarding link
+        account_link = stripe.AccountLink.create(
+            account=account.id,
+            refresh_url=request.refresh_url,
+            return_url=request.return_url,
+            type="account_onboarding",
+        )
+        
+        return {
+            "success": True,
+            "accountId": account.id,
+            "onboardingUrl": account_link.url,
+            "expiresAt": account_link.expires_at
+        }
+        
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Connect account error: {str(e)}")
+
+
+@router.get("/connect/account/{account_id}")
+def get_connect_account(account_id: str):
+    """Get the status of a Connect account"""
+    try:
+        account = stripe.Account.retrieve(account_id)
+        
+        return {
+            "id": account.id,
+            "email": account.email,
+            "chargesEnabled": account.charges_enabled,
+            "payoutsEnabled": account.payouts_enabled,
+            "detailsSubmitted": account.details_submitted,
+            "requirements": account.requirements,
+            "businessProfile": account.business_profile
+        }
+    except stripe.error.InvalidRequestError:
+        raise HTTPException(status_code=404, detail="Account not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/connect/create-login-link/{account_id}")
+def create_connect_login_link(account_id: str):
+    """Create a login link for franchisee to access their Stripe dashboard"""
+    try:
+        login_link = stripe.Account.create_login_link(account_id)
+        return {
+            "url": login_link.url
+        }
+    except stripe.error.InvalidRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/connect/transfer")
+def transfer_to_franchisee(request: TransferToFranchiseeRequest):
+    """
+    Transfer payment to franchisee after job completion.
+    Deducts 18% platform fee, transfers 82% to franchisee.
+    """
+    try:
+        # Get the payment intent to find the charge
+        payment_intent = stripe.PaymentIntent.retrieve(request.payment_intent_id)
+        
+        if payment_intent.status != "succeeded":
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Payment not yet captured. Status: {payment_intent.status}"
+            )
+        
+        # Get the charge ID from the payment intent
+        if not payment_intent.latest_charge:
+            raise HTTPException(status_code=400, detail="No charge found for this payment")
+        
+        # Calculate transfer amount (82% to franchisee)
+        total_amount = payment_intent.amount
+        platform_fee = int(total_amount * PLATFORM_FEE_PERCENT / 100)
+        franchisee_amount = total_amount - platform_fee
+        
+        # Create transfer to franchisee's Connect account
+        transfer = stripe.Transfer.create(
+            amount=franchisee_amount,
+            currency="cad",
+            destination=request.franchisee_stripe_account,
+            source_transaction=payment_intent.latest_charge,
+            metadata={
+                "booking_id": request.booking_id,
+                "payment_intent_id": request.payment_intent_id,
+                "platform_fee": platform_fee,
+                "platform_fee_percent": PLATFORM_FEE_PERCENT
+            },
+            description=f"CleanGrid job payout - Booking {request.booking_id[:8]}"
+        )
+        
+        return {
+            "success": True,
+            "transferId": transfer.id,
+            "amount": transfer.amount,
+            "franchiseeAmount": franchisee_amount,
+            "platformFee": platform_fee,
+            "platformFeePercent": PLATFORM_FEE_PERCENT,
+            "destination": transfer.destination,
+            "status": "transferred"
+        }
+        
+    except stripe.error.InvalidRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Transfer error: {str(e)}")
+
+
+@router.post("/connect/payout/{account_id}")
+def create_payout(account_id: str, amount: Optional[int] = None):
+    """
+    Trigger an instant payout to franchisee's bank account.
+    If amount is not specified, pays out the entire available balance.
+    """
+    try:
+        # Get account balance
+        balance = stripe.Balance.retrieve(stripe_account=account_id)
+        available = balance.available[0].amount if balance.available else 0
+        
+        if amount is None:
+            amount = available
+        
+        if amount <= 0:
+            return {
+                "success": False,
+                "message": "No funds available for payout",
+                "availableBalance": available
+            }
+        
+        # Create payout
+        payout = stripe.Payout.create(
+            amount=amount,
+            currency="cad",
+            stripe_account=account_id
+        )
+        
+        return {
+            "success": True,
+            "payoutId": payout.id,
+            "amount": payout.amount,
+            "status": payout.status,
+            "arrivalDate": payout.arrival_date
+        }
+        
+    except stripe.error.InvalidRequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/create-payment-intent")
