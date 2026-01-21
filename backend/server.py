@@ -676,6 +676,83 @@ async def get_available_addons():
     return {"addons": AVAILABLE_ADDONS}
 
 # BOOKING ROUTES
+@api_router.post("/bookings/check-conflict")
+async def check_booking_conflict(data: dict, current_user: User = Depends(get_current_user)):
+    """Check if there's a scheduling conflict for the customer"""
+    scheduled_date_str = data.get("scheduledDate", "")
+    recurring = data.get("recurring")
+    
+    if not scheduled_date_str:
+        return {"hasConflict": False}
+    
+    try:
+        scheduled_date = datetime.fromisoformat(scheduled_date_str.replace('Z', '+00:00'))
+    except:
+        return {"hasConflict": False}
+    
+    # Find existing bookings for this customer that might conflict
+    # Check bookings within 3 hours of the requested time
+    three_hours = timedelta(hours=3)
+    start_window = scheduled_date - three_hours
+    end_window = scheduled_date + three_hours
+    
+    existing_bookings = await db.bookings.find({
+        "customerId": current_user.id,
+        "status": {"$nin": ["cancelled", "completed"]},
+        "scheduledDate": {
+            "$gte": start_window,
+            "$lte": end_window
+        }
+    }).to_list(length=10)
+    
+    if existing_bookings:
+        conflict = existing_bookings[0]
+        conflict_date = conflict.get("scheduledDate")
+        return {
+            "hasConflict": True,
+            "conflictingBooking": {
+                "date": conflict_date.strftime("%B %d, %Y") if conflict_date else "",
+                "time": conflict_date.strftime("%I:%M %p") if conflict_date else "",
+                "service": conflict.get("serviceName", "Cleaning")
+            }
+        }
+    
+    # For recurring bookings, check future occurrences
+    if recurring and recurring in ['weekly', 'biweekly', 'monthly']:
+        # Check the next 4 occurrences
+        intervals = {'weekly': 7, 'biweekly': 14, 'monthly': 30}
+        interval_days = intervals.get(recurring, 7)
+        
+        for i in range(1, 5):
+            future_date = scheduled_date + timedelta(days=interval_days * i)
+            future_start = future_date - three_hours
+            future_end = future_date + three_hours
+            
+            future_conflicts = await db.bookings.find({
+                "customerId": current_user.id,
+                "status": {"$nin": ["cancelled", "completed"]},
+                "scheduledDate": {
+                    "$gte": future_start,
+                    "$lte": future_end
+                }
+            }).to_list(length=1)
+            
+            if future_conflicts:
+                conflict = future_conflicts[0]
+                conflict_date = conflict.get("scheduledDate")
+                return {
+                    "hasConflict": True,
+                    "conflictingBooking": {
+                        "date": conflict_date.strftime("%B %d, %Y") if conflict_date else "",
+                        "time": conflict_date.strftime("%I:%M %p") if conflict_date else "",
+                        "service": conflict.get("serviceName", "Cleaning"),
+                        "isRecurringConflict": True,
+                        "occurrence": i
+                    }
+                }
+    
+    return {"hasConflict": False}
+
 @api_router.post("/bookings", response_model=Booking)
 async def create_booking(booking: BookingCreate, current_user: User = Depends(get_current_user)):
     if current_user.role != "customer":
