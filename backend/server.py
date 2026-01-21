@@ -435,6 +435,14 @@ async def signup(user: UserCreate):
     
     result = await db.users.insert_one(user_dict)
     
+    # Send welcome email
+    try:
+        from services.email_service import send_welcome_email
+        send_welcome_email(user.email, user.name)
+        logging.info(f"Welcome email sent to {user.email}")
+    except Exception as e:
+        logging.warning(f"Failed to send welcome email: {str(e)}")
+    
     # Create token
     access_token = create_access_token({"sub": str(result.inserted_id)})
     
