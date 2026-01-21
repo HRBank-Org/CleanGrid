@@ -596,6 +596,10 @@ async def create_booking(booking: BookingCreate, current_user: User = Depends(ge
     # Find franchisee
     franchisee = await find_franchisee_by_fsa(fsa_code)
     
+    # Get service name for email
+    service = await db.services.find_one({"_id": ObjectId(booking.serviceId)})
+    service_name = service["name"] if service else "Cleaning Service"
+    
     booking_dict = booking.dict()
     booking_dict["customerId"] = current_user.id
     booking_dict["franchiseeId"] = str(franchisee["_id"]) if franchisee else None
@@ -615,6 +619,24 @@ async def create_booking(booking: BookingCreate, current_user: User = Depends(ge
         logging.info(f"Booking {booking_id} sent to HR Bank: {hrbank_result}")
     else:
         logging.warning(f"Failed to send booking to HR Bank: {hrbank_result}")
+    
+    # Send confirmation email to customer
+    try:
+        from services.email_service import send_booking_confirmation
+        scheduled_dt = datetime.fromisoformat(booking.scheduledDate.replace('Z', '+00:00')) if isinstance(booking.scheduledDate, str) else booking.scheduledDate
+        send_booking_confirmation(
+            to_email=current_user.email,
+            customer_name=current_user.name,
+            booking_id=booking_id,
+            service_name=service_name,
+            address=booking.address,
+            scheduled_date=scheduled_dt.strftime("%B %d, %Y"),
+            scheduled_time=scheduled_dt.strftime("%I:%M %p"),
+            total_price=booking.totalPrice
+        )
+        logging.info(f"Confirmation email sent to {current_user.email}")
+    except Exception as e:
+        logging.warning(f"Failed to send confirmation email: {str(e)}")
     
     created_booking = await db.bookings.find_one({"_id": result.inserted_id})
     created_booking["_id"] = str(created_booking["_id"])
