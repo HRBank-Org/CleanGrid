@@ -95,6 +95,10 @@ export default function Book() {
   // Quote
   const [quote, setQuote] = useState<QuoteResponse | null>(null)
   const [calculatingQuote, setCalculatingQuote] = useState(false)
+  
+  // Payment
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)
+  const [bookingId, setBookingId] = useState<string | null>(null)
 
   // New property form
   const [showNewProperty, setShowNewProperty] = useState(false)
