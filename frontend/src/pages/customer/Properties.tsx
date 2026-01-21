@@ -51,6 +51,7 @@ export default function Properties() {
   const [error, setError] = useState<string | null>(null)
   const [validatingAddress, setValidatingAddress] = useState(false)
   const [addressValid, setAddressValid] = useState<boolean | null>(null)
+  const [geocodeInfo, setGeocodeInfo] = useState<{ geocoded: boolean; formattedAddress?: string; hasCoverage?: boolean } | null>(null)
   
   useEffect(() => {
     loadProperties()
