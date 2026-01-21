@@ -897,6 +897,13 @@ async def update_booking_status(
 
 @api_router.delete("/bookings/{booking_id}")
 async def cancel_booking(booking_id: str, current_user: User = Depends(get_current_user)):
+    """
+    Cancel a booking with escrow-linked cancellation policy:
+    - 24+ hours before: Full refund (100%)
+    - 12-24 hours before: 50% refund
+    - Less than 12 hours: No refund (franchisee gets payment)
+    - In-progress: Cannot cancel
+    """
     booking = await db.bookings.find_one({"_id": ObjectId(booking_id)})
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -907,19 +914,159 @@ async def cancel_booking(booking_id: str, current_user: User = Depends(get_curre
     if booking["status"] in ["completed", "cancelled"]:
         raise HTTPException(status_code=400, detail="Cannot cancel this booking")
     
+    if booking["status"] == "in-progress":
+        raise HTTPException(status_code=400, detail="Cannot cancel a booking that is already in progress")
+    
+    # Calculate time until scheduled date
+    scheduled_date = booking.get("scheduledDate")
+    if isinstance(scheduled_date, str):
+        scheduled_date = datetime.fromisoformat(scheduled_date.replace('Z', '+00:00'))
+    
+    now = datetime.utcnow()
+    if scheduled_date.tzinfo:
+        now = now.replace(tzinfo=scheduled_date.tzinfo)
+    
+    hours_until = (scheduled_date - now).total_seconds() / 3600
+    
+    # Determine refund based on cancellation policy
+    total_price = booking.get("totalPrice", 0)
+    
+    if hours_until >= 24:
+        refund_percentage = 100
+        escrow_status = "refunded-to-customer"
+        cancellation_fee = 0
+    elif hours_until >= 12:
+        refund_percentage = 50
+        escrow_status = "partial-refund"
+        cancellation_fee = total_price * 0.5
+    else:
+        refund_percentage = 0
+        escrow_status = "released-to-franchisee"
+        cancellation_fee = total_price
+    
+    refund_amount = total_price * (refund_percentage / 100)
+    
     # Cancel in HR Bank first
-    hrbank_result = await cancel_in_hrbank(booking_id, "Customer cancelled via Neatify")
+    hrbank_result = await cancel_in_hrbank(booking_id, "Customer cancelled via CleanGrid")
     if hrbank_result.get("success"):
         logging.info(f"Booking {booking_id} cancelled in HR Bank")
     else:
         logging.warning(f"Failed to cancel in HR Bank: {hrbank_result}")
     
+    # Update booking with cancellation details
     await db.bookings.update_one(
         {"_id": ObjectId(booking_id)},
-        {"$set": {"status": "cancelled"}}
+        {"$set": {
+            "status": "cancelled",
+            "escrowStatus": escrow_status,
+            "cancelledAt": datetime.utcnow(),
+            "cancelledBy": current_user.id,
+            "cancellationDetails": {
+                "hoursBeforeScheduled": round(hours_until, 1),
+                "refundPercentage": refund_percentage,
+                "refundAmount": refund_amount,
+                "cancellationFee": cancellation_fee,
+                "policy": "24h+ = 100% refund, 12-24h = 50% refund, <12h = no refund"
+            }
+        }}
     )
     
-    return {"message": "Booking cancelled successfully"}
+    # Send cancellation notification email
+    try:
+        from services.email_service import send_booking_cancelled_email
+        customer = await db.users.find_one({"_id": ObjectId(booking["customerId"])})
+        if customer:
+            send_booking_cancelled_email(
+                to_email=customer["email"],
+                customer_name=customer.get("name", "Customer"),
+                booking_id=booking_id,
+                refund_amount=refund_amount,
+                refund_percentage=refund_percentage
+            )
+    except Exception as e:
+        logging.warning(f"Failed to send cancellation email: {str(e)}")
+    
+    # Send SMS notification
+    try:
+        from services.sms_service import send_booking_cancelled_sms
+        customer = await db.users.find_one({"_id": ObjectId(booking["customerId"])})
+        if customer and customer.get("phone"):
+            send_booking_cancelled_sms(
+                to_number=customer["phone"],
+                refund_percentage=refund_percentage
+            )
+    except Exception as e:
+        logging.warning(f"Failed to send cancellation SMS: {str(e)}")
+    
+    return {
+        "message": "Booking cancelled successfully",
+        "cancellation": {
+            "refundPercentage": refund_percentage,
+            "refundAmount": refund_amount,
+            "cancellationFee": cancellation_fee,
+            "escrowStatus": escrow_status
+        }
+    }
+
+# Cancellation policy endpoint
+@api_router.get("/bookings/{booking_id}/cancellation-policy")
+async def get_cancellation_policy(booking_id: str, current_user: User = Depends(get_current_user)):
+    """Get the cancellation policy and estimated refund for a booking"""
+    booking = await db.bookings.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    if current_user.role == "customer" and booking["customerId"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if booking["status"] in ["completed", "cancelled"]:
+        return {
+            "canCancel": False,
+            "reason": f"Booking is already {booking['status']}"
+        }
+    
+    if booking["status"] == "in-progress":
+        return {
+            "canCancel": False,
+            "reason": "Cannot cancel a booking that is in progress"
+        }
+    
+    # Calculate time until scheduled date
+    scheduled_date = booking.get("scheduledDate")
+    if isinstance(scheduled_date, str):
+        scheduled_date = datetime.fromisoformat(scheduled_date.replace('Z', '+00:00'))
+    
+    now = datetime.utcnow()
+    if scheduled_date.tzinfo:
+        now = now.replace(tzinfo=scheduled_date.tzinfo)
+    
+    hours_until = (scheduled_date - now).total_seconds() / 3600
+    total_price = booking.get("totalPrice", 0)
+    
+    if hours_until >= 24:
+        refund_percentage = 100
+        message = "Full refund available (24+ hours before appointment)"
+    elif hours_until >= 12:
+        refund_percentage = 50
+        message = "50% refund available (12-24 hours before appointment)"
+    else:
+        refund_percentage = 0
+        message = "No refund available (less than 12 hours before appointment)"
+    
+    return {
+        "canCancel": True,
+        "hoursUntilAppointment": round(hours_until, 1),
+        "totalPrice": total_price,
+        "refundPercentage": refund_percentage,
+        "refundAmount": total_price * (refund_percentage / 100),
+        "cancellationFee": total_price * ((100 - refund_percentage) / 100),
+        "message": message,
+        "policy": {
+            "fullRefund": "Cancel 24+ hours before for 100% refund",
+            "partialRefund": "Cancel 12-24 hours before for 50% refund",
+            "noRefund": "Cancel less than 12 hours before = no refund"
+        }
+    }
 
 # HR BANK API ROUTES
 @api_router.get("/hrbank/check-coverage/{postal_code}")
