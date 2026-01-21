@@ -9,6 +9,7 @@ interface User {
   role: string
   address?: string
   postalCode?: string
+  profilePhoto?: string | null
 }
 
 interface AuthState {
@@ -21,9 +22,10 @@ interface AuthState {
   logout: () => void
   loadUser: () => void
   clearError: () => void
+  updateProfile: (data: Partial<User>) => Promise<boolean>
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: localStorage.getItem('token'),
   isLoading: true,
@@ -71,6 +73,21 @@ export const useAuthStore = create<AuthState>((set) => ({
       return true
     } catch (err: any) {
       const message = err.response?.data?.detail || 'Signup failed'
+      set({ error: message, isLoading: false })
+      return false
+    }
+  },
+  
+  updateProfile: async (data: Partial<User>) => {
+    set({ isLoading: true, error: null })
+    try {
+      const response = await api.patch('/auth/profile', data)
+      const updatedUser = response.data
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+      set({ user: updatedUser, isLoading: false })
+      return true
+    } catch (err: any) {
+      const message = err.response?.data?.detail || 'Update failed'
       set({ error: message, isLoading: false })
       return false
     }
