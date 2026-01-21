@@ -158,18 +158,22 @@ Need to reschedule? Visit cleangrid.at/bookings"""
 
 def send_booking_cancelled_sms(
     to_number: str,
-    customer_name: str,
-    booking_id: str,
-    refund_amount: Optional[float] = None
+    refund_percentage: int
 ) -> dict:
-    """Send SMS when booking is cancelled"""
+    """Send SMS when booking is cancelled with refund info based on policy"""
     
-    refund_text = f" ${refund_amount:.2f} will be refunded." if refund_amount else ""
+    if refund_percentage == 100:
+        refund_text = "Full refund coming your way within 5-10 days."
+    elif refund_percentage == 50:
+        refund_text = "50% refund will be processed within 5-10 days."
+    else:
+        refund_text = "Per our policy, no refund for cancellations <12hrs before."
     
     message = f"""❌ Booking Cancelled
 
-Hi {customer_name.split()[0]}, your CleanGrid booking #{booking_id[:8].upper()} has been cancelled.{refund_text}
+Your CleanGrid booking has been cancelled. {refund_text}
 
+Questions? support@cleangrid.at
 Book again: cleangrid.at/book"""
     
     return send_sms(to_number, message)
