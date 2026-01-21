@@ -53,7 +53,7 @@ interface QuoteResponse {
   estimatedDuration: number
 }
 
-type BookingStep = 'property' | 'service' | 'schedule' | 'confirm'
+type BookingStep = 'property' | 'service' | 'schedule' | 'payment' | 'confirm'
 
 const RECURRING_OPTIONS = [
   { value: '', label: 'One-time', discount: 0 },
