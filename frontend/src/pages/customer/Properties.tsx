@@ -76,6 +76,7 @@ export default function Properties() {
 
     setValidatingAddress(true)
     setError(null)
+    setGeocodeInfo(null)
     
     try {
       // Validate postal code format (Canadian)
@@ -94,10 +95,11 @@ export default function Properties() {
       
       if (response.data.valid) {
         setAddressValid(true)
-        // Update address with formatted version if available
-        if (response.data.formattedAddress) {
-          setForm(f => ({ ...f, address: response.data.formattedAddress }))
-        }
+        setGeocodeInfo({
+          geocoded: response.data.geocoded,
+          formattedAddress: response.data.formattedAddress,
+          hasCoverage: response.data.hasCoverage
+        })
         return true
       } else {
         setError(response.data.message || 'Address could not be verified')
