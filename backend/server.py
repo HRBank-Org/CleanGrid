@@ -1034,10 +1034,12 @@ async def get_workforce_jobs(current_user: User = Depends(get_current_user)):
 from routes.franchisee import router as franchisee_router
 from routes.webhooks import router as webhooks_router
 from routes.admin import router as admin_router
+from routes.payments import router as payments_router
 
 api_router.include_router(franchisee_router)
 api_router.include_router(webhooks_router)
 api_router.include_router(admin_router)
+api_router.include_router(payments_router)
 
 # Include the router in the main app
 app.include_router(api_router)
