@@ -628,23 +628,46 @@ async def create_booking(booking: BookingCreate, current_user: User = Depends(ge
     else:
         logging.warning(f"Failed to send booking to HR Bank: {hrbank_result}")
     
+    # Parse scheduled date for notifications
+    try:
+        scheduled_dt = datetime.fromisoformat(booking.scheduledDate.replace('Z', '+00:00')) if isinstance(booking.scheduledDate, str) else booking.scheduledDate
+        formatted_date = scheduled_dt.strftime("%B %d, %Y")
+        formatted_time = scheduled_dt.strftime("%I:%M %p")
+    except:
+        formatted_date = str(booking.scheduledDate)
+        formatted_time = ""
+    
     # Send confirmation email to customer
     try:
         from services.email_service import send_booking_confirmation
-        scheduled_dt = datetime.fromisoformat(booking.scheduledDate.replace('Z', '+00:00')) if isinstance(booking.scheduledDate, str) else booking.scheduledDate
         send_booking_confirmation(
             to_email=current_user.email,
             customer_name=current_user.name,
             booking_id=booking_id,
             service_name=service_name,
             address=booking.address,
-            scheduled_date=scheduled_dt.strftime("%B %d, %Y"),
-            scheduled_time=scheduled_dt.strftime("%I:%M %p"),
+            scheduled_date=formatted_date,
+            scheduled_time=formatted_time,
             total_price=booking.totalPrice
         )
         logging.info(f"Confirmation email sent to {current_user.email}")
     except Exception as e:
         logging.warning(f"Failed to send confirmation email: {str(e)}")
+    
+    # Send confirmation SMS to customer
+    try:
+        from services.sms_service import send_booking_confirmation_sms
+        if current_user.phone:
+            send_booking_confirmation_sms(
+                to_number=current_user.phone,
+                customer_name=current_user.name,
+                service_name=service_name,
+                scheduled_date=formatted_date,
+                scheduled_time=formatted_time
+            )
+            logging.info(f"Confirmation SMS sent to {current_user.phone}")
+    except Exception as e:
+        logging.warning(f"Failed to send confirmation SMS: {str(e)}")
     
     created_booking = await db.bookings.find_one({"_id": result.inserted_id})
     created_booking["_id"] = str(created_booking["_id"])
