@@ -16,7 +16,15 @@ import {
   Loader2,
   Sparkles,
   AlertCircle,
-  CreditCard
+  Minus,
+  Refrigerator,
+  Microwave,
+  Wind,
+  Shirt,
+  Bed,
+  Bath,
+  DoorOpen,
+  UtensilsCrossed
 } from 'lucide-react'
 
 interface Property {
@@ -43,8 +51,17 @@ interface Service {
   estimatedDuration: number
 }
 
+interface QuoteDetails {
+  bedrooms: number
+  bathrooms: number
+  kitchens: number
+  livingRooms: number
+  addons: string[]
+}
+
 interface QuoteResponse {
   basePrice: number
+  roomsPrice: number
   sqftPrice: number
   addonPrices: { name: string; price: number }[]
   subtotal: number
@@ -55,7 +72,16 @@ interface QuoteResponse {
   estimatedDuration: number
 }
 
-type BookingStep = 'property' | 'service' | 'schedule' | 'payment' | 'confirm'
+interface ConflictInfo {
+  hasConflict: boolean
+  conflictingBooking?: {
+    date: string
+    time: string
+    service: string
+  }
+}
+
+type BookingStep = 'property' | 'service' | 'details' | 'schedule' | 'payment' | 'confirm'
 
 const RECURRING_OPTIONS = [
   { value: '', label: 'One-time', discount: 0 },
@@ -71,6 +97,24 @@ const TIME_SLOTS = [
   { value: '14:00', label: '2:00 PM - 4:00 PM' },
   { value: '16:00', label: '4:00 PM - 6:00 PM' },
 ]
+
+// Add-on options with prices and icons
+const ADDON_OPTIONS = [
+  { id: 'fridge', name: 'Inside Fridge', price: 35, icon: Refrigerator, duration: 20 },
+  { id: 'oven', name: 'Inside Oven', price: 40, icon: Microwave, duration: 25 },
+  { id: 'windows', name: 'Interior Windows', price: 45, icon: Wind, duration: 30 },
+  { id: 'laundry', name: 'Laundry (Wash & Fold)', price: 30, icon: Shirt, duration: 45 },
+  { id: 'cabinets', name: 'Inside Cabinets', price: 50, icon: DoorOpen, duration: 30 },
+  { id: 'dishes', name: 'Dishes', price: 15, icon: UtensilsCrossed, duration: 15 },
+]
+
+// Room pricing
+const ROOM_PRICES = {
+  bedroom: 25,
+  bathroom: 35,
+  kitchen: 40,
+  livingRoom: 30
+}
 
 export default function Book() {
   const navigate = useNavigate()
@@ -94,6 +138,15 @@ export default function Book() {
   const [selectedTime, setSelectedTime] = useState('')
   const [notes, setNotes] = useState('')
   
+  // Quote details (rooms & add-ons)
+  const [quoteDetails, setQuoteDetails] = useState<QuoteDetails>({
+    bedrooms: 2,
+    bathrooms: 1,
+    kitchens: 1,
+    livingRooms: 1,
+    addons: []
+  })
+  
   // Quote
   const [quote, setQuote] = useState<QuoteResponse | null>(null)
   const [calculatingQuote, setCalculatingQuote] = useState(false)
@@ -101,6 +154,10 @@ export default function Book() {
   // Payment
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)
   const [bookingId, setBookingId] = useState<string | null>(null)
+  
+  // Conflict detection
+  const [checkingConflict, setCheckingConflict] = useState(false)
+  const [conflictInfo, setConflictInfo] = useState<ConflictInfo | null>(null)
 
   // New property form
   const [showNewProperty, setShowNewProperty] = useState(false)
@@ -131,11 +188,29 @@ export default function Book() {
   }, [searchParams, services])
 
   useEffect(() => {
-    // Calculate quote when service and property are selected
+    // Update quote details when property is selected
+    if (selectedProperty) {
+      setQuoteDetails(prev => ({
+        ...prev,
+        bedrooms: selectedProperty.bedrooms || 2,
+        bathrooms: selectedProperty.bathrooms || 1
+      }))
+    }
+  }, [selectedProperty])
+
+  useEffect(() => {
+    // Calculate quote when service, property, and details are set
     if (selectedProperty && selectedService) {
       calculateQuote()
     }
-  }, [selectedProperty, selectedService, recurring])
+  }, [selectedProperty, selectedService, quoteDetails, recurring])
+
+  useEffect(() => {
+    // Check for conflicts when date/time changes
+    if (selectedDate && selectedTime && selectedProperty) {
+      checkBookingConflict()
+    }
+  }, [selectedDate, selectedTime, selectedProperty, recurring])
 
   const loadData = async () => {
     try {
@@ -161,35 +236,107 @@ export default function Book() {
         service_category: selectedService.category,
         property_type: selectedService.serviceType,
         square_feet: selectedProperty.squareFeet || 1000,
-        bedrooms: selectedProperty.bedrooms || 2,
-        bathrooms: selectedProperty.bathrooms || 1,
+        bedrooms: quoteDetails.bedrooms,
+        bathrooms: quoteDetails.bathrooms,
+        kitchens: quoteDetails.kitchens,
+        living_rooms: quoteDetails.livingRooms,
         frequency: recurring || 'one_time',
-        addons: []
+        addons: quoteDetails.addons
       })
       setQuote(response.data)
     } catch (err) {
-      // Fallback to simple calculation
+      // Fallback to local calculation
       const basePrice = selectedService.serviceType === 'commercial' 
         ? selectedService.basePriceCommercial 
         : selectedService.basePriceResidential
-      const sqftPrice = selectedService.pricePerSqFt * (selectedProperty.squareFeet || 1000)
-      const subtotal = basePrice + sqftPrice
-      const discount = recurring ? subtotal * (RECURRING_OPTIONS.find(r => r.value === recurring)?.discount || 0) / 100 : 0
-      const tax = (subtotal - discount) * 0.13
+      
+      // Calculate room prices
+      const roomsPrice = 
+        (quoteDetails.bedrooms * ROOM_PRICES.bedroom) +
+        (quoteDetails.bathrooms * ROOM_PRICES.bathroom) +
+        (quoteDetails.kitchens * ROOM_PRICES.kitchen) +
+        (quoteDetails.livingRooms * ROOM_PRICES.livingRoom)
+      
+      // Calculate add-on prices
+      const addonPrices = quoteDetails.addons.map(addonId => {
+        const addon = ADDON_OPTIONS.find(a => a.id === addonId)
+        return { name: addon?.name || addonId, price: addon?.price || 0 }
+      })
+      const addonsTotal = addonPrices.reduce((sum, a) => sum + a.price, 0)
+      
+      // Subtotal
+      const subtotal = basePrice + roomsPrice + addonsTotal
+      
+      // Discount
+      const discountPercent = RECURRING_OPTIONS.find(r => r.value === recurring)?.discount || 0
+      const recurringDiscount = subtotal * (discountPercent / 100)
+      
+      // Tax (13% HST)
+      const taxAmount = (subtotal - recurringDiscount) * 0.13
+      
+      // Duration
+      const baseDuration = selectedService.estimatedDuration
+      const addonDuration = quoteDetails.addons.reduce((sum, addonId) => {
+        const addon = ADDON_OPTIONS.find(a => a.id === addonId)
+        return sum + (addon?.duration || 0)
+      }, 0)
       
       setQuote({
         basePrice,
-        sqftPrice,
-        addonPrices: [],
+        roomsPrice,
+        sqftPrice: 0,
+        addonPrices,
         subtotal,
-        recurringDiscount: discount,
+        recurringDiscount,
         promoDiscount: 0,
-        taxAmount: tax,
-        totalPrice: subtotal - discount + tax,
-        estimatedDuration: selectedService.estimatedDuration
+        taxAmount,
+        totalPrice: subtotal - recurringDiscount + taxAmount,
+        estimatedDuration: baseDuration + addonDuration
       })
     } finally {
       setCalculatingQuote(false)
+    }
+  }
+
+  const checkBookingConflict = async () => {
+    if (!selectedDate || !selectedTime || !selectedProperty) return
+    
+    setCheckingConflict(true)
+    try {
+      const response = await api.post('/bookings/check-conflict', {
+        propertyId: selectedProperty._id,
+        scheduledDate: `${selectedDate}T${selectedTime}:00`,
+        recurring: recurring || null
+      })
+      setConflictInfo(response.data)
+    } catch (err) {
+      // If endpoint doesn't exist, check locally
+      try {
+        const bookingsRes = await api.get('/bookings')
+        const existingBookings = bookingsRes.data
+        
+        const selectedDateTime = new Date(`${selectedDate}T${selectedTime}:00`)
+        const conflict = existingBookings.find((booking: any) => {
+          if (booking.status === 'cancelled') return false
+          const bookingDate = new Date(booking.scheduledDate)
+          // Check if same day and overlapping time (within 3 hours)
+          const timeDiff = Math.abs(selectedDateTime.getTime() - bookingDate.getTime())
+          return timeDiff < 3 * 60 * 60 * 1000 // 3 hours
+        })
+        
+        setConflictInfo({
+          hasConflict: !!conflict,
+          conflictingBooking: conflict ? {
+            date: new Date(conflict.scheduledDate).toLocaleDateString(),
+            time: new Date(conflict.scheduledDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            service: conflict.serviceName || 'Cleaning'
+          } : undefined
+        })
+      } catch {
+        setConflictInfo({ hasConflict: false })
+      }
+    } finally {
+      setCheckingConflict(false)
     }
   }
 
@@ -226,12 +373,18 @@ export default function Book() {
       return
     }
 
+    if (conflictInfo?.hasConflict) {
+      setError('Please select a different date/time - there is a scheduling conflict')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
     try {
       const bookingData = {
         serviceId: selectedService._id,
+        serviceName: selectedService.name,
         serviceType: selectedService.serviceType,
         address: selectedProperty.apartmentNumber 
           ? `${selectedProperty.address}, Unit ${selectedProperty.apartmentNumber}`
@@ -244,7 +397,15 @@ export default function Book() {
         totalPrice: quote.totalPrice,
         notes: notes,
         paymentIntentId: paymentIntentId,
-        paymentStatus: 'authorized'
+        paymentStatus: 'authorized',
+        // Enhanced quote details
+        quoteDetails: {
+          bedrooms: quoteDetails.bedrooms,
+          bathrooms: quoteDetails.bathrooms,
+          kitchens: quoteDetails.kitchens,
+          livingRooms: quoteDetails.livingRooms,
+          addons: quoteDetails.addons
+        }
       }
 
       await api.post('/bookings', bookingData)
@@ -256,6 +417,23 @@ export default function Book() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const toggleAddon = (addonId: string) => {
+    setQuoteDetails(prev => ({
+      ...prev,
+      addons: prev.addons.includes(addonId)
+        ? prev.addons.filter(id => id !== addonId)
+        : [...prev.addons, addonId]
+    }))
+  }
+
+  const updateRoomCount = (room: keyof QuoteDetails, delta: number) => {
+    if (room === 'addons') return
+    setQuoteDetails(prev => ({
+      ...prev,
+      [room]: Math.max(0, (prev[room] as number) + delta)
+    }))
   }
 
   const getMinDate = () => {
@@ -273,13 +451,13 @@ export default function Book() {
     return `${minutes} minutes`
   }
 
-  const STEPS = ['property', 'service', 'schedule', 'payment', 'confirm']
+  const STEPS = ['property', 'service', 'details', 'schedule', 'payment', 'confirm']
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-1 mb-6">
       {STEPS.map((s, i) => (
         <div key={s} className="flex items-center">
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
             step === s 
               ? 'bg-primary text-white' 
               : STEPS.indexOf(step) > i
@@ -293,7 +471,7 @@ export default function Book() {
             )}
           </div>
           {i < STEPS.length - 1 && (
-            <div className={`w-6 h-0.5 ${
+            <div className={`w-4 h-0.5 ${
               STEPS.indexOf(step) > i 
                 ? 'bg-primary' 
                 : 'bg-gray-200'
@@ -304,6 +482,15 @@ export default function Book() {
     </div>
   )
 
+  const goBack = () => {
+    const currentIndex = STEPS.indexOf(step)
+    if (currentIndex === 0) {
+      navigate(-1)
+    } else {
+      setStep(STEPS[currentIndex - 1] as BookingStep)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -313,24 +500,12 @@ export default function Book() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="px-4 py-4 flex items-center gap-4">
           <button 
-            onClick={() => {
-              if (step === 'property') {
-                navigate(-1)
-              } else if (step === 'service') {
-                setStep('property')
-              } else if (step === 'schedule') {
-                setStep('service')
-              } else if (step === 'payment') {
-                setStep('schedule')
-              } else {
-                setStep('payment')
-              }
-            }}
+            onClick={goBack}
             className="p-2 -ml-2 hover:bg-gray-100 rounded-full"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -384,13 +559,10 @@ export default function Book() {
                       <div className="flex-1">
                         <h3 className="font-semibold text-secondary-900">{property.name}</h3>
                         <p className="text-sm text-gray-500">{property.address}</p>
-                        {property.apartmentNumber && (
-                          <p className="text-sm text-gray-400">Unit {property.apartmentNumber}</p>
-                        )}
                         <div className="flex gap-3 mt-2 text-xs text-gray-400">
+                          <span>{property.bedrooms} bed</span>
+                          <span>{property.bathrooms} bath</span>
                           <span>{property.squareFeet} sq ft</span>
-                          {property.bedrooms > 0 && <span>{property.bedrooms} bed</span>}
-                          {property.bathrooms > 0 && <span>{property.bathrooms} bath</span>}
                         </div>
                       </div>
                       <ChevronRight className="w-5 h-5 text-gray-300" />
@@ -414,105 +586,43 @@ export default function Book() {
               <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-4">
                 <h3 className="font-semibold text-secondary-900">New Property</h3>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Property Name *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Home, Office"
-                    value={newProperty.name}
-                    onChange={(e) => setNewProperty({ ...newProperty, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Property Name (e.g., Home, Office)"
+                  value={newProperty.name}
+                  onChange={(e) => setNewProperty({ ...newProperty, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
-                  <input
-                    type="text"
-                    placeholder="123 Main Street"
-                    value={newProperty.address}
-                    onChange={(e) => setNewProperty({ ...newProperty, address: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Street Address"
+                  value={newProperty.address}
+                  onChange={(e) => setNewProperty({ ...newProperty, address: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                />
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Unit/Apt #</label>
-                    <input
-                      type="text"
-                      placeholder="Optional"
-                      value={newProperty.apartmentNumber}
-                      onChange={(e) => setNewProperty({ ...newProperty, apartmentNumber: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code *</label>
-                    <input
-                      type="text"
-                      placeholder="M5V 3A8"
-                      value={newProperty.postalCode}
-                      onChange={(e) => setNewProperty({ ...newProperty, postalCode: e.target.value.toUpperCase() })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {['residential', 'commercial'].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setNewProperty({ ...newProperty, propertyType: type })}
-                        className={`py-3 px-4 rounded-xl border-2 flex items-center justify-center gap-2 capitalize transition-colors ${
-                          newProperty.propertyType === type
-                            ? 'border-primary bg-primary-50 text-primary'
-                            : 'border-gray-200 text-gray-600'
-                        }`}
-                      >
-                        {type === 'commercial' ? <Building2 className="w-4 h-4" /> : <Home className="w-4 h-4" />}
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sq Ft</label>
-                    <input
-                      type="number"
-                      value={newProperty.squareFeet}
-                      onChange={(e) => setNewProperty({ ...newProperty, squareFeet: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Beds</label>
-                    <input
-                      type="number"
-                      value={newProperty.bedrooms}
-                      onChange={(e) => setNewProperty({ ...newProperty, bedrooms: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Baths</label>
-                    <input
-                      type="number"
-                      value={newProperty.bathrooms}
-                      onChange={(e) => setNewProperty({ ...newProperty, bathrooms: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    placeholder="Unit/Apt #"
+                    value={newProperty.apartmentNumber}
+                    onChange={(e) => setNewProperty({ ...newProperty, apartmentNumber: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Postal Code"
+                    value={newProperty.postalCode}
+                    onChange={(e) => setNewProperty({ ...newProperty, postalCode: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                  />
                 </div>
 
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowNewProperty(false)}
-                    className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-600 font-medium"
+                    className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-600"
                   >
                     Cancel
                   </button>
@@ -536,7 +646,6 @@ export default function Book() {
               <p className="text-gray-500 text-sm">What type of cleaning do you need?</p>
             </div>
 
-            {/* Selected Property Summary */}
             {selectedProperty && (
               <div className="bg-primary-50 rounded-xl p-3 flex items-center gap-3">
                 <MapPin className="w-5 h-5 text-primary" />
@@ -544,16 +653,12 @@ export default function Book() {
                   <p className="text-sm font-medium text-secondary-900">{selectedProperty.name}</p>
                   <p className="text-xs text-gray-500">{selectedProperty.address}</p>
                 </div>
-                <button 
-                  onClick={() => setStep('property')}
-                  className="text-primary text-sm font-medium"
-                >
+                <button onClick={() => setStep('property')} className="text-primary text-sm font-medium">
                   Change
                 </button>
               </div>
             )}
 
-            {/* Filter services by property type */}
             <div className="space-y-3">
               {services
                 .filter(s => selectedProperty?.propertyType === 'commercial' 
@@ -564,7 +669,7 @@ export default function Book() {
                     key={service._id}
                     onClick={() => {
                       setSelectedService(service)
-                      setStep('schedule')
+                      setStep('details')
                     }}
                     className={`bg-white rounded-xl p-4 border-2 cursor-pointer transition-all ${
                       selectedService?._id === service._id
@@ -572,26 +677,172 @@ export default function Book() {
                         : 'border-gray-100 hover:border-gray-200'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-secondary-900">{service.name}</h3>
-                        <p className="text-sm text-gray-500 mt-1">{service.description}</p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="text-primary font-bold">
-                            From ${(selectedProperty?.propertyType === 'commercial' 
-                              ? service.basePriceCommercial 
-                              : service.basePriceResidential).toFixed(2)}
-                          </span>
-                          <span className="text-xs text-gray-400">~{formatDuration(service.estimatedDuration)}</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-300" />
+                    <h3 className="font-semibold text-secondary-900">{service.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{service.description}</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-primary font-bold">
+                        From ${(selectedProperty?.propertyType === 'commercial' 
+                          ? service.basePriceCommercial 
+                          : service.basePriceResidential).toFixed(2)}
+                      </span>
+                      <span className="text-xs text-gray-400">~{formatDuration(service.estimatedDuration)}</span>
                     </div>
                   </div>
                 ))}
             </div>
+          </div>
+        )}
 
-            {/* Recurring Options */}
+        {/* Step 3: Customize Quote (Rooms & Add-ons) */}
+        {step === 'details' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-secondary-900 mb-1">Customize Your Clean</h2>
+              <p className="text-gray-500 text-sm">Tell us about your space for an accurate quote</p>
+            </div>
+
+            {/* Rooms */}
+            <div className="bg-white rounded-xl p-4 border border-gray-100">
+              <h3 className="font-semibold text-secondary-900 mb-4">Rooms</h3>
+              
+              <div className="space-y-4">
+                {/* Bedrooms */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Bed className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="font-medium text-secondary-900">Bedrooms</p>
+                      <p className="text-xs text-gray-400">+${ROOM_PRICES.bedroom} each</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => updateRoomCount('bedrooms', -1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-8 text-center font-semibold">{quoteDetails.bedrooms}</span>
+                    <button
+                      onClick={() => updateRoomCount('bedrooms', 1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bathrooms */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Bath className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="font-medium text-secondary-900">Bathrooms</p>
+                      <p className="text-xs text-gray-400">+${ROOM_PRICES.bathroom} each</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => updateRoomCount('bathrooms', -1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-8 text-center font-semibold">{quoteDetails.bathrooms}</span>
+                    <button
+                      onClick={() => updateRoomCount('bathrooms', 1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Kitchens */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <UtensilsCrossed className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="font-medium text-secondary-900">Kitchens</p>
+                      <p className="text-xs text-gray-400">+${ROOM_PRICES.kitchen} each</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => updateRoomCount('kitchens', -1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-8 text-center font-semibold">{quoteDetails.kitchens}</span>
+                    <button
+                      onClick={() => updateRoomCount('kitchens', 1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Living Rooms */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Home className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="font-medium text-secondary-900">Living Rooms</p>
+                      <p className="text-xs text-gray-400">+${ROOM_PRICES.livingRoom} each</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => updateRoomCount('livingRooms', -1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-8 text-center font-semibold">{quoteDetails.livingRooms}</span>
+                    <button
+                      onClick={() => updateRoomCount('livingRooms', 1)}
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Add-ons */}
+            <div className="bg-white rounded-xl p-4 border border-gray-100">
+              <h3 className="font-semibold text-secondary-900 mb-4">Add-on Services</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {ADDON_OPTIONS.map((addon) => {
+                  const isSelected = quoteDetails.addons.includes(addon.id)
+                  return (
+                    <button
+                      key={addon.id}
+                      onClick={() => toggleAddon(addon.id)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        isSelected
+                          ? 'border-primary bg-primary-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <addon.icon className={`w-4 h-4 ${isSelected ? 'text-primary' : 'text-gray-400'}`} />
+                        {isSelected && <Check className="w-3 h-3 text-primary ml-auto" />}
+                      </div>
+                      <p className={`text-sm font-medium ${isSelected ? 'text-primary' : 'text-secondary-900'}`}>
+                        {addon.name}
+                      </p>
+                      <p className="text-xs text-gray-500">+${addon.price}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Frequency */}
             <div className="bg-white rounded-xl p-4 border border-gray-100">
               <h3 className="font-semibold text-secondary-900 mb-3">Cleaning Frequency</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -613,33 +864,38 @@ export default function Book() {
                 ))}
               </div>
             </div>
+
+            {/* Live Quote Preview */}
+            {quote && (
+              <div className="bg-gradient-to-r from-primary to-primary-dark rounded-xl p-4 text-white">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-white/80 text-sm">Estimated Total</p>
+                    <p className="text-2xl font-bold">${quote.totalPrice.toFixed(2)} CAD</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white/80 text-sm">Duration</p>
+                    <p className="font-semibold">~{formatDuration(quote.estimatedDuration)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setStep('schedule')}
+              className="w-full py-4 bg-primary text-white rounded-xl font-semibold"
+            >
+              Continue to Schedule
+            </button>
           </div>
         )}
 
-        {/* Step 3: Schedule */}
+        {/* Step 4: Schedule */}
         {step === 'schedule' && (
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-bold text-secondary-900 mb-1">Pick Date & Time</h2>
               <p className="text-gray-500 text-sm">When should we come?</p>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-white rounded-xl p-4 border border-gray-100 space-y-3">
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
-                <div className="flex-1">
-                  <p className="text-sm text-gray-500">Location</p>
-                  <p className="font-medium text-secondary-900">{selectedProperty?.name}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-gray-400" />
-                <div className="flex-1">
-                  <p className="text-sm text-gray-500">Service</p>
-                  <p className="font-medium text-secondary-900">{selectedService?.name}</p>
-                </div>
-              </div>
             </div>
 
             {/* Date Selection */}
@@ -653,7 +909,7 @@ export default function Book() {
                 min={getMinDate()}
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl"
               />
             </div>
 
@@ -680,6 +936,29 @@ export default function Book() {
               </div>
             </div>
 
+            {/* Conflict Warning */}
+            {checkingConflict && (
+              <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                <span className="text-sm text-gray-500">Checking availability...</span>
+              </div>
+            )}
+
+            {conflictInfo?.hasConflict && (
+              <div className="bg-red-50 rounded-xl p-4 border border-red-200">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-red-900">Scheduling Conflict</p>
+                    <p className="text-sm text-red-700 mt-1">
+                      You already have a booking on {conflictInfo.conflictingBooking?.date} at{' '}
+                      {conflictInfo.conflictingBooking?.time}. Please select a different time.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Notes */}
             <div className="bg-white rounded-xl p-4 border border-gray-100">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -688,23 +967,23 @@ export default function Book() {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any special requests or access instructions?"
+                placeholder="Access codes, pet info, focus areas..."
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl resize-none"
               />
             </div>
 
             <button
               onClick={() => setStep('payment')}
-              disabled={!selectedDate || !selectedTime}
-              className="w-full py-4 bg-primary text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!selectedDate || !selectedTime || conflictInfo?.hasConflict}
+              className="w-full py-4 bg-primary text-white rounded-xl font-semibold disabled:opacity-50"
             >
               Continue to Payment
             </button>
           </div>
         )}
 
-        {/* Step 4: Payment */}
+        {/* Step 5: Payment */}
         {step === 'payment' && (
           <div className="space-y-4">
             <div>
@@ -713,28 +992,45 @@ export default function Book() {
             </div>
 
             {/* Order Summary */}
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+            <div className="bg-white rounded-xl p-4 border border-gray-100 space-y-2">
+              <h3 className="font-semibold text-secondary-900 mb-3">Order Summary</h3>
+              
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">{selectedService?.name}</span>
+                <span className="text-gray-600">Base ({selectedService?.name})</span>
                 <span className="font-medium">${quote?.basePrice.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Area ({selectedProperty?.squareFeet} sq ft)</span>
-                <span className="font-medium">${quote?.sqftPrice.toFixed(2)}</span>
-              </div>
+              
+              {quote && quote.roomsPrice > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    Rooms ({quoteDetails.bedrooms}BR + {quoteDetails.bathrooms}BA + {quoteDetails.kitchens}K + {quoteDetails.livingRooms}LR)
+                  </span>
+                  <span className="font-medium">${quote.roomsPrice.toFixed(2)}</span>
+                </div>
+              )}
+              
+              {quote?.addonPrices.map((addon, i) => (
+                <div key={i} className="flex justify-between text-sm">
+                  <span className="text-gray-600">{addon.name}</span>
+                  <span className="font-medium">${addon.price.toFixed(2)}</span>
+                </div>
+              ))}
+              
               {quote && quote.recurringDiscount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
-                  <span>Recurring discount</span>
+                  <span>{RECURRING_OPTIONS.find(r => r.value === recurring)?.label} discount</span>
                   <span>-${quote.recurringDiscount.toFixed(2)}</span>
                 </div>
               )}
+              
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Tax (HST 13%)</span>
                 <span className="font-medium">${quote?.taxAmount.toFixed(2)}</span>
               </div>
+              
               <div className="flex justify-between pt-2 border-t border-gray-200 font-semibold">
                 <span>Total</span>
-                <span className="text-primary">${quote?.totalPrice.toFixed(2)} CAD</span>
+                <span className="text-primary text-lg">${quote?.totalPrice.toFixed(2)} CAD</span>
               </div>
             </div>
 
@@ -753,15 +1049,13 @@ export default function Book() {
               />
             )}
 
-            <div className="text-center">
-              <p className="text-xs text-gray-400">
-                Your card will be authorized but not charged until your cleaning is completed.
-              </p>
-            </div>
+            <p className="text-xs text-center text-gray-400">
+              Your card will be authorized but not charged until your cleaning is completed.
+            </p>
           </div>
         )}
 
-        {/* Step 5: Confirm */}
+        {/* Step 6: Confirm */}
         {step === 'confirm' && (
           <div className="space-y-4">
             <div>
@@ -780,9 +1074,6 @@ export default function Book() {
                     <p className="text-sm text-gray-500">Location</p>
                     <p className="font-semibold text-secondary-900">{selectedProperty?.name}</p>
                     <p className="text-sm text-gray-600">{selectedProperty?.address}</p>
-                    {selectedProperty?.apartmentNumber && (
-                      <p className="text-sm text-gray-500">Unit {selectedProperty.apartmentNumber}</p>
-                    )}
                   </div>
                 </div>
 
@@ -793,9 +1084,13 @@ export default function Book() {
                   <div>
                     <p className="text-sm text-gray-500">Service</p>
                     <p className="font-semibold text-secondary-900">{selectedService?.name}</p>
+                    <p className="text-sm text-gray-600">
+                      {quoteDetails.bedrooms}BR, {quoteDetails.bathrooms}BA, {quoteDetails.kitchens}K
+                      {quoteDetails.addons.length > 0 && ` + ${quoteDetails.addons.length} add-ons`}
+                    </p>
                     {recurring && (
                       <p className="text-sm text-green-600 font-medium">
-                        {RECURRING_OPTIONS.find(r => r.value === recurring)?.label} • Save {RECURRING_OPTIONS.find(r => r.value === recurring)?.discount}%
+                        {RECURRING_OPTIONS.find(r => r.value === recurring)?.label}
                       </p>
                     )}
                   </div>
@@ -817,54 +1112,29 @@ export default function Book() {
                 </div>
               </div>
 
-              {/* Price Breakdown */}
+              {/* Price */}
               <div className="bg-gray-50 p-4 border-t border-gray-100">
-                <h3 className="font-semibold text-secondary-900 mb-3">Price Breakdown</h3>
-                
-                {calculatingQuote ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                  </div>
-                ) : quote ? (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Base price</span>
-                      <span className="text-secondary-900">${quote.basePrice.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Square footage ({selectedProperty?.squareFeet} sq ft)</span>
-                      <span className="text-secondary-900">${quote.sqftPrice.toFixed(2)}</span>
-                    </div>
-                    {quote.recurringDiscount > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Recurring discount</span>
-                        <span>-${quote.recurringDiscount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Tax (HST 13%)</span>
-                      <span className="text-secondary-900">${quote.taxAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between pt-2 border-t border-gray-200 font-semibold">
-                      <span className="text-secondary-900">Total</span>
-                      <span className="text-primary text-lg">${quote.totalPrice.toFixed(2)}</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Estimated duration: ~{formatDuration(quote.estimatedDuration)}
-                    </p>
-                  </div>
-                ) : null}
+                <div className="flex justify-between font-semibold">
+                  <span>Total</span>
+                  <span className="text-primary text-lg">${quote?.totalPrice.toFixed(2)} CAD</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  Duration: ~{formatDuration(quote?.estimatedDuration || 0)}
+                </p>
               </div>
             </div>
 
-            {/* Payment Notice */}
+            {/* Payment Authorized */}
             <div className="bg-green-50 rounded-xl p-4 flex items-start gap-3">
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <Check className="w-4 h-4 text-green-600" />
               </div>
               <div>
                 <p className="font-medium text-green-900">Payment Authorized</p>
-                <p className="text-sm text-green-700">Your payment of ${quote?.totalPrice.toFixed(2)} has been authorized. You'll only be charged after your cleaning is complete.</p>
+                <p className="text-sm text-green-700">
+                  Your payment of ${quote?.totalPrice.toFixed(2)} has been authorized. 
+                  You'll only be charged after your cleaning is complete.
+                </p>
               </div>
             </div>
 
@@ -886,9 +1156,7 @@ export default function Book() {
                   Processing...
                 </>
               ) : (
-                <>
-                  Confirm Booking • ${quote?.totalPrice.toFixed(2)}
-                </>
+                <>Confirm Booking • ${quote?.totalPrice.toFixed(2)}</>
               )}
             </button>
           </div>
