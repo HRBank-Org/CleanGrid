@@ -530,7 +530,7 @@ def send_worker_invite_email(
 ) -> bool:
     """Send invitation email to a new worker"""
     
-    invite_url = f"" + FRONTEND_URL + "/worker/join?code={invite_code}"
+    invite_url = f"{FRONTEND_URL}/worker/join?code={invite_code}"
     
     content = f"""
     <h2 style="color: #111827; margin-bottom: 8px;">You're Invited to Join CleanGrid!</h2>
