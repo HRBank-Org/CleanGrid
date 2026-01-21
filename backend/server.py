@@ -484,6 +484,126 @@ async def get_hrbank_status(neatify_booking_id: str) -> dict:
         logging.error(f"HR Bank status check failed: {e}")
         return {"success": False, "error": str(e)}
 
+# ==================== HR BANK WEBHOOK CALLBACKS ====================
+
+class HRBankWebhookPayload(BaseModel):
+    """Payload from HR Bank webhook callbacks"""
+    event_type: str  # 'work_order.accepted', 'work_order.assigned', 'work_order.completed', 'work_order.declined'
+    work_order_id: str
+    cleangrid_booking_id: str
+    timestamp: str
+    data: Optional[dict] = {}
+
+@api_router.post("/webhooks/hrbank")
+async def hrbank_webhook(payload: HRBankWebhookPayload, request: Request):
+    """
+    Webhook endpoint for HR Bank to notify CleanGrid of work order status changes.
+    
+    Events:
+    - work_order.accepted: Franchisee accepted the work order
+    - work_order.assigned: Workers have been assigned to the job
+    - work_order.completed: Job has been completed
+    - work_order.declined: Franchisee declined the work order
+    """
+    # Verify webhook is from HR Bank (check API key in header)
+    api_key = request.headers.get("X-API-Key")
+    if api_key != HRBANK_API_KEY:
+        # Also accept a dedicated webhook secret if configured
+        webhook_secret = os.getenv("HRBANK_WEBHOOK_SECRET", HRBANK_API_KEY)
+        if api_key != webhook_secret:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+    
+    booking_id = payload.cleangrid_booking_id
+    event = payload.event_type
+    
+    logging.info(f"HR Bank webhook received: {event} for booking {booking_id}")
+    
+    # Find the booking
+    booking = await db.bookings.find_one({"_id": ObjectId(booking_id)})
+    if not booking:
+        logging.warning(f"Booking {booking_id} not found for HR Bank webhook")
+        return {"success": False, "error": "Booking not found"}
+    
+    update_data = {
+        "hrbankStatus": event.replace("work_order.", ""),
+        "hrbankLastUpdate": datetime.utcnow()
+    }
+    
+    # Handle different event types
+    if event == "work_order.accepted":
+        update_data["status"] = "confirmed"
+        # Notify customer
+        try:
+            from services.sms_service import send_booking_status_update_sms
+            customer = await db.users.find_one({"_id": ObjectId(booking["customerId"])})
+            if customer and customer.get("phone"):
+                send_booking_status_update_sms(
+                    to_number=customer["phone"],
+                    customer_name=customer.get("name", ""),
+                    booking_id=booking_id,
+                    new_status="confirmed"
+                )
+        except Exception as e:
+            logging.warning(f"Failed to send status SMS: {e}")
+    
+    elif event == "work_order.assigned":
+        update_data["status"] = "assigned"
+        # Store assigned worker info if provided
+        if payload.data.get("assigned_workers"):
+            update_data["assignedWorkers"] = payload.data["assigned_workers"]
+        if payload.data.get("assigned_shift_id"):
+            update_data["hrbankShiftId"] = payload.data["assigned_shift_id"]
+    
+    elif event == "work_order.completed":
+        update_data["status"] = "completed"
+        update_data["completedAt"] = datetime.utcnow()
+        # Release escrow to franchisee
+        update_data["escrowStatus"] = "released-to-franchisee"
+        
+        # TODO: Trigger Stripe transfer to franchisee's connected account
+        # For now, mark for manual processing
+        update_data["payoutStatus"] = "pending"
+        
+        # Send completion notification
+        try:
+            from services.email_service import send_booking_completed
+            customer = await db.users.find_one({"_id": ObjectId(booking["customerId"])})
+            if customer:
+                send_booking_completed(
+                    to_email=customer["email"],
+                    customer_name=customer.get("name", "Customer"),
+                    booking_id=booking_id,
+                    service_name=booking.get("serviceName", "Cleaning Service")
+                )
+        except Exception as e:
+            logging.warning(f"Failed to send completion email: {e}")
+    
+    elif event == "work_order.declined":
+        # Franchisee declined - need to reassign or refund
+        update_data["hrbankStatus"] = "declined"
+        update_data["declineReason"] = payload.data.get("reason", "Franchisee unavailable")
+        
+        # Try to find another franchisee or notify admin
+        logging.warning(f"Work order {booking_id} declined by franchisee")
+        
+        # For now, mark as pending reassignment
+        update_data["status"] = "pending"
+        update_data["needsReassignment"] = True
+    
+    # Update the booking
+    await db.bookings.update_one(
+        {"_id": ObjectId(booking_id)},
+        {"$set": update_data}
+    )
+    
+    logging.info(f"Booking {booking_id} updated: {event}")
+    
+    return {
+        "success": True,
+        "message": f"Webhook processed: {event}",
+        "booking_status": update_data.get("status")
+    }
+
 # ==================== ROUTES ====================
 
 @api_router.get("/")
