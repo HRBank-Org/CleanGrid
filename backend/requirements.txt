@@ -64,6 +64,7 @@ shellingham==1.5.4
 six==1.17.0
 starlette==0.37.2
 stripe==14.2.0
+twilio==9.9.1
 typer==0.20.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
