@@ -309,6 +309,41 @@ export default function Properties() {
             Verify Address
           </button>
 
+          {/* Geocoding Results */}
+          {geocodeInfo && addressValid && (
+            <div className={`p-3 rounded-xl text-sm ${
+              geocodeInfo.geocoded 
+                ? 'bg-green-50 border border-green-200' 
+                : 'bg-yellow-50 border border-yellow-200'
+            }`}>
+              <div className="flex items-start gap-2">
+                {geocodeInfo.geocoded ? (
+                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                )}
+                <div>
+                  {geocodeInfo.geocoded ? (
+                    <>
+                      <p className="font-medium text-green-800">Address verified</p>
+                      {geocodeInfo.formattedAddress && (
+                        <p className="text-green-600 text-xs mt-1 line-clamp-2">{geocodeInfo.formattedAddress}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-yellow-800">Address format valid but location could not be confirmed. Please double-check.</p>
+                  )}
+                  {geocodeInfo.hasCoverage === false && (
+                    <p className="text-amber-600 text-xs mt-1">Note: No service coverage in this area yet</p>
+                  )}
+                  {geocodeInfo.hasCoverage === true && (
+                    <p className="text-green-600 text-xs mt-1">✓ Service available in this area</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
             <div className="grid grid-cols-2 gap-3">
