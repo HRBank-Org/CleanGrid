@@ -17,7 +17,7 @@ FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL", "noreply@cleangrid.at")
 FROM_NAME = os.getenv("SENDGRID_FROM_NAME", "CleanGrid")
 
 # Frontend URL for links in emails
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://cleangrid.at")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "{FRONTEND_URL}")
 
 
 def send_email(
@@ -145,7 +145,7 @@ def send_booking_confirmation(
     </p>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/bookings" class="button">View My Bookings</a>
+        <a href="{FRONTEND_URL}/bookings" class="button">View My Bookings</a>
     </div>
     """
     
@@ -192,7 +192,7 @@ def send_booking_assigned(
     </p>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/bookings" class="button">View Booking Details</a>
+        <a href="{FRONTEND_URL}/bookings" class="button">View Booking Details</a>
     </div>
     """
     
@@ -238,7 +238,7 @@ def send_booking_completed(
     </p>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/bookings/{booking_id}/review" class="button">Leave a Review</a>
+        <a href="{FRONTEND_URL}/bookings/{booking_id}/review" class="button">Leave a Review</a>
     </div>
     """
     
@@ -281,7 +281,7 @@ def send_booking_cancelled(
     </p>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/book" class="button">Book Again</a>
+        <a href="{FRONTEND_URL}/book" class="button">Book Again</a>
     </div>
     """
     
@@ -356,7 +356,7 @@ def send_booking_cancelled_email(
     </p>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/book" class="button">Book Again</a>
+        <a href="{FRONTEND_URL}/book" class="button">Book Again</a>
     </div>
     """
     
@@ -387,7 +387,7 @@ def send_welcome_email(to_email: str, name: str) -> bool:
     </div>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/book" class="button">Book Your First Cleaning</a>
+        <a href="{FRONTEND_URL}/book" class="button">Book Your First Cleaning</a>
     </div>
     """
     
@@ -443,7 +443,7 @@ def send_franchisee_new_job(
     </p>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/franchisee/jobs" class="button">View Job Details</a>
+        <a href="{FRONTEND_URL}/franchisee/jobs" class="button">View Job Details</a>
     </div>
     """
     
@@ -459,7 +459,7 @@ def send_franchisee_new_job(
 def send_password_reset_email(to_email: str, name: str, reset_token: str) -> bool:
     """Send password reset email"""
     
-    reset_url = f"https://cleangrid.at/reset-password?token={reset_token}"
+    reset_url = f"{FRONTEND_URL}/reset-password?token={reset_token}"
     
     content = f"""
     <h2 style="color: #111827; margin-bottom: 8px;">Reset Your Password 🔐</h2>
@@ -507,7 +507,7 @@ def send_password_changed_email(to_email: str, name: str) -> bool:
     </div>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/login" class="button">Log In Now</a>
+        <a href="{FRONTEND_URL}/login" class="button">Log In Now</a>
     </div>
     """
     
@@ -530,7 +530,7 @@ def send_worker_invite_email(
 ) -> bool:
     """Send invitation email to a new worker"""
     
-    invite_url = f"https://cleangrid.at/worker/join?code={invite_code}"
+    invite_url = f"{FRONTEND_URL}/worker/join?code={invite_code}"
     
     content = f"""
     <h2 style="color: #111827; margin-bottom: 8px;">You're Invited to Join CleanGrid!</h2>
@@ -596,7 +596,7 @@ def send_worker_welcome_email(
     </p>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/worker/training" class="button">Start Training</a>
+        <a href="{FRONTEND_URL}/worker/training" class="button">Start Training</a>
     </div>
     """
     
@@ -630,7 +630,7 @@ def send_worker_training_complete_email(
     </div>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="https://cleangrid.at/worker" class="button">Go to Dashboard</a>
+        <a href="{FRONTEND_URL}/worker" class="button">Go to Dashboard</a>
     </div>
     """
     
