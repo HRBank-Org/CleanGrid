@@ -560,9 +560,66 @@ async def hrbank_webhook(payload: HRBankWebhookPayload, request: Request):
         # Release escrow to franchisee
         update_data["escrowStatus"] = "released-to-franchisee"
         
-        # TODO: Trigger Stripe transfer to franchisee's connected account
-        # For now, mark for manual processing
-        update_data["payoutStatus"] = "pending"
+        # Process Stripe payment capture and transfer to franchisee
+        payment_intent_id = booking.get("paymentIntentId")
+        franchisee_id = booking.get("franchiseeId")
+        
+        if payment_intent_id and franchisee_id:
+            try:
+                import stripe
+                stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+                
+                # First, capture the payment (it was held with manual capture)
+                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+                
+                if payment_intent.status == "requires_capture":
+                    captured = stripe.PaymentIntent.capture(payment_intent_id)
+                    logging.info(f"Payment captured for booking {booking_id}: {captured.amount}")
+                    update_data["paymentCapturedAt"] = datetime.utcnow()
+                
+                # Get franchisee's Stripe Connect account
+                franchisee = await db.users.find_one({"_id": ObjectId(franchisee_id)})
+                franchisee_stripe_account = franchisee.get("stripeConnectAccountId") if franchisee else None
+                
+                if franchisee_stripe_account:
+                    # Calculate 82% for franchisee (18% platform fee)
+                    total_amount = booking.get("totalPrice", 0) * 100  # Convert to cents
+                    platform_fee = int(total_amount * 0.18)
+                    franchisee_amount = int(total_amount - platform_fee)
+                    
+                    # Create transfer to franchisee
+                    transfer = stripe.Transfer.create(
+                        amount=franchisee_amount,
+                        currency="cad",
+                        destination=franchisee_stripe_account,
+                        source_transaction=payment_intent.latest_charge,
+                        metadata={
+                            "booking_id": booking_id,
+                            "platform_fee": platform_fee,
+                            "platform_fee_percent": 18
+                        },
+                        description=f"CleanGrid payout - Booking {booking_id[:8]}"
+                    )
+                    
+                    update_data["payoutStatus"] = "completed"
+                    update_data["payoutDetails"] = {
+                        "transferId": transfer.id,
+                        "franchiseeAmount": franchisee_amount / 100,
+                        "platformFee": platform_fee / 100,
+                        "transferredAt": datetime.utcnow().isoformat()
+                    }
+                    logging.info(f"Transfer completed for booking {booking_id}: ${franchisee_amount/100} to {franchisee_stripe_account}")
+                else:
+                    # No Stripe account - mark for manual payout
+                    update_data["payoutStatus"] = "pending-manual"
+                    logging.warning(f"Franchisee {franchisee_id} has no Stripe Connect account")
+                    
+            except Exception as e:
+                logging.error(f"Payment processing error for booking {booking_id}: {e}")
+                update_data["payoutStatus"] = "error"
+                update_data["payoutError"] = str(e)
+        else:
+            update_data["payoutStatus"] = "no-payment"
         
         # Send completion notification
         try:
