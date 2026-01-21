@@ -15,6 +15,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import FranchiseeApply from './pages/FranchiseeApply'
 import ApplicationStatus from './pages/ApplicationStatus'
+import HelpSupport from './pages/HelpSupport'
 
 // Customer Pages
 import Home from './pages/customer/Home'
