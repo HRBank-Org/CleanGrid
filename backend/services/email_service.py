@@ -375,3 +375,67 @@ def send_franchisee_new_job(
         html_content=get_base_template(content),
         to_name=franchisee_name
     )
+
+
+
+def send_password_reset_email(to_email: str, name: str, reset_token: str) -> bool:
+    """Send password reset email"""
+    
+    reset_url = f"https://cleangrid.at/reset-password?token={reset_token}"
+    
+    content = f"""
+    <h2 style="color: #111827; margin-bottom: 8px;">Reset Your Password 🔐</h2>
+    <p style="color: #6b7280;">Hi {name},</p>
+    <p style="color: #6b7280;">We received a request to reset your CleanGrid password. Click the button below to create a new password:</p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{reset_url}" class="button">Reset Password</a>
+    </div>
+    
+    <div class="info-box" style="background: #fef3c7; border-color: #fcd34d;">
+        <p style="margin: 0; color: #92400e; font-size: 14px;">
+            <strong>⏰ This link expires in 1 hour.</strong><br>
+            If you didn't request a password reset, you can safely ignore this email.
+        </p>
+    </div>
+    
+    <p style="color: #6b7280; font-size: 12px; margin-top: 20px;">
+        If the button doesn't work, copy and paste this link into your browser:<br>
+        <a href="{reset_url}" style="color: #10B981; word-break: break-all;">{reset_url}</a>
+    </p>
+    """
+    
+    return send_email(
+        to_email=to_email,
+        subject="Reset Your CleanGrid Password",
+        html_content=get_base_template(content),
+        to_name=name
+    )
+
+
+def send_password_changed_email(to_email: str, name: str) -> bool:
+    """Send confirmation email when password is changed"""
+    
+    content = f"""
+    <h2 style="color: #111827; margin-bottom: 8px;">Password Changed ✅</h2>
+    <p style="color: #6b7280;">Hi {name},</p>
+    <p style="color: #6b7280;">Your CleanGrid password has been successfully changed.</p>
+    
+    <div class="info-box" style="background: #fef2f2; border-color: #fecaca;">
+        <p style="margin: 0; color: #991b1b; font-size: 14px;">
+            <strong>Didn't make this change?</strong><br>
+            If you didn't change your password, please contact us immediately at support@cleangrid.at
+        </p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="https://cleangrid.at/login" class="button">Log In Now</a>
+    </div>
+    """
+    
+    return send_email(
+        to_email=to_email,
+        subject="Your CleanGrid Password Has Been Changed",
+        html_content=get_base_template(content),
+        to_name=name
+    )
