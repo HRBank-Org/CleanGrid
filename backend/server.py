@@ -481,6 +481,82 @@ async def login(credentials: UserLogin):
         user=User(**user)
     )
 
+@api_router.post("/auth/forgot-password")
+async def forgot_password(request: PasswordResetRequest):
+    """Request a password reset email"""
+    import secrets
+    
+    user = await db.users.find_one({"email": request.email})
+    
+    # Always return success to prevent email enumeration
+    if not user:
+        return {"message": "If an account exists with this email, you will receive a password reset link"}
+    
+    # Generate reset token
+    reset_token = secrets.token_urlsafe(32)
+    reset_expires = datetime.utcnow() + timedelta(hours=1)
+    
+    # Store reset token in database
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {
+            "resetToken": reset_token,
+            "resetTokenExpires": reset_expires
+        }}
+    )
+    
+    # Send password reset email
+    try:
+        from services.email_service import send_password_reset_email
+        send_password_reset_email(
+            to_email=request.email,
+            name=user.get("name", "User"),
+            reset_token=reset_token
+        )
+        logging.info(f"Password reset email sent to {request.email}")
+    except Exception as e:
+        logging.warning(f"Failed to send password reset email: {str(e)}")
+    
+    return {"message": "If an account exists with this email, you will receive a password reset link"}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(request: PasswordResetConfirm):
+    """Reset password using token from email"""
+    
+    # Find user with valid reset token
+    user = await db.users.find_one({
+        "resetToken": request.token,
+        "resetTokenExpires": {"$gt": datetime.utcnow()}
+    })
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    # Validate new password
+    if len(request.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Update password and clear reset token
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {"password": get_password_hash(request.new_password)},
+            "$unset": {"resetToken": "", "resetTokenExpires": ""}
+        }
+    )
+    
+    # Send confirmation email
+    try:
+        from services.email_service import send_password_changed_email
+        send_password_changed_email(
+            to_email=user["email"],
+            name=user.get("name", "User")
+        )
+    except Exception as e:
+        logging.warning(f"Failed to send password changed email: {str(e)}")
+    
+    return {"message": "Password has been reset successfully"}
+
 @api_router.get("/auth/me", response_model=User)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
