@@ -17,7 +17,7 @@ FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL", "noreply@cleangrid.at")
 FROM_NAME = os.getenv("SENDGRID_FROM_NAME", "CleanGrid")
 
 # Frontend URL for links in emails
-FRONTEND_URL = os.getenv("FRONTEND_URL", "" + FRONTEND_URL + "")
+FRONTEND_URL = os.getenv("FRONTEND_URL", FRONTEND_URL)
 
 
 def send_email(
