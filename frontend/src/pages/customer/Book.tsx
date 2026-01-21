@@ -271,26 +271,28 @@ export default function Book() {
     return `${minutes} minutes`
   }
 
+  const STEPS = ['property', 'service', 'schedule', 'payment', 'confirm']
+
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center gap-2 mb-6">
-      {['property', 'service', 'schedule', 'confirm'].map((s, i) => (
+    <div className="flex items-center justify-center gap-1 mb-6">
+      {STEPS.map((s, i) => (
         <div key={s} className="flex items-center">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
             step === s 
               ? 'bg-primary text-white' 
-              : ['property', 'service', 'schedule', 'confirm'].indexOf(step) > i
+              : STEPS.indexOf(step) > i
                 ? 'bg-primary text-white'
                 : 'bg-gray-200 text-gray-500'
           }`}>
-            {['property', 'service', 'schedule', 'confirm'].indexOf(step) > i ? (
-              <Check className="w-4 h-4" />
+            {STEPS.indexOf(step) > i ? (
+              <Check className="w-3 h-3" />
             ) : (
               i + 1
             )}
           </div>
-          {i < 3 && (
-            <div className={`w-8 h-0.5 ${
-              ['property', 'service', 'schedule', 'confirm'].indexOf(step) > i 
+          {i < STEPS.length - 1 && (
+            <div className={`w-6 h-0.5 ${
+              STEPS.indexOf(step) > i 
                 ? 'bg-primary' 
                 : 'bg-gray-200'
             }`} />
