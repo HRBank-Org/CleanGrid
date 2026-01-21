@@ -63,6 +63,8 @@ export default function App() {
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/apply" element={<FranchiseeApply />} />
         <Route path="/application-status" element={<ApplicationStatus />} />
       </Route>
