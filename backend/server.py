@@ -1038,6 +1038,66 @@ async def update_property(
     
     return Property(**updated_property)
 
+@api_router.patch("/properties/{property_id}", response_model=Property)
+async def patch_property(
+    property_id: str,
+    property_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """Partially update a property"""
+    property_doc = await db.properties.find_one({"_id": ObjectId(property_id)})
+    if not property_doc:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    if property_doc["customerId"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Extract FSA if postal code is updated
+    if "postalCode" in property_data:
+        property_data["fsaCode"] = extract_fsa(property_data["postalCode"])
+    
+    await db.properties.update_one(
+        {"_id": ObjectId(property_id)},
+        {"$set": property_data}
+    )
+    
+    updated_property = await db.properties.find_one({"_id": ObjectId(property_id)})
+    updated_property["_id"] = str(updated_property["_id"])
+    
+    return Property(**updated_property)
+
+@api_router.post("/properties/validate-address")
+async def validate_address(data: dict):
+    """Validate an address using postal code format and coverage check"""
+    address = data.get("address", "")
+    postal_code = data.get("postalCode", "")
+    
+    # Validate postal code format (Canadian)
+    import re
+    postal_regex = r'^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$'
+    if not re.match(postal_regex, postal_code):
+        return {
+            "valid": False,
+            "message": "Invalid postal code format. Use Canadian format (e.g., M5V 3A8)"
+        }
+    
+    # Extract FSA and check if we have coverage
+    fsa_code = extract_fsa(postal_code)
+    franchisee = await find_franchisee_by_fsa(fsa_code)
+    
+    # Format postal code consistently
+    formatted_postal = postal_code.upper().replace(" ", "")
+    if len(formatted_postal) == 6:
+        formatted_postal = f"{formatted_postal[:3]} {formatted_postal[3:]}"
+    
+    return {
+        "valid": True,
+        "fsa": fsa_code,
+        "hasCoverage": franchisee is not None,
+        "formattedPostalCode": formatted_postal,
+        "message": "Address validated" if franchisee else f"Note: No service coverage in {fsa_code} yet"
+    }
+
 @api_router.delete("/properties/{property_id}")
 async def delete_property(property_id: str, current_user: User = Depends(get_current_user)):
     """Delete a property - only if no active bookings"""
