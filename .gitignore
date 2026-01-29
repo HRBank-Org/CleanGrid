@@ -28,12 +28,6 @@ next-env.d.ts
 # Production builds
 /build
 dist/
-dist
-
-# Environment files (comprehensive coverage)
-
-*token.json*
-*credentials.json*
 
 # Logs and debug files
 npm-debug.log*
@@ -48,21 +42,18 @@ dump.rdb
 
 # Python
 __pycache__/
-*pyc*
+*.pyc
 venv/
 .venv/
+*.egg-info/
 
 # Development tools
 chainlit.md
 .chainlit
 .ipynb_checkpoints/
-.ac
 
 # Deployment
 .vercel
-
-# Data and databases
-agenthub/agents/youtube/db
 
 # Archive files and large assets
 **/*.zip
@@ -82,18 +73,24 @@ android-sdk/
 # Environment files - keep .env for deployment, ignore local overrides
 .env.local
 .env.*.local
-.env.development
-.env.test
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Exclude reference/analysis repositories
+# Sensitive credential files
+*token.json*
+*credentials.json*
+
+# Exclude reference/analysis repositories (if they exist)
 HRBankv12/
 CleanGrid/
 
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Model patch files
+model.patch
