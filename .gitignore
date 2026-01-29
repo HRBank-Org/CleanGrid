@@ -94,3 +94,7 @@ CleanGrid/
 
 # Model patch files
 model.patch
+-e 
+# Environment files
+*.env
+*.env.*
