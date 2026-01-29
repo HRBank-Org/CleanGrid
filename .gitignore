@@ -70,15 +70,18 @@ chainlit.md
 # Mobile development
 android-sdk/
 
-# Environment files - keep .env for deployment, ignore local overrides
+# Environment files - ignore actual .env, keep .env.example for documentation
 .env
+!.env.example
 .env.local
 .env.*.local
 .env.development.local
 .env.test.local
 .env.production.local
 backend/.env
+!backend/.env.example
 frontend/.env
+!frontend/.env.example
 
 # Sensitive credential files
 *token.json*
